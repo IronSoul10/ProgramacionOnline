@@ -1,6 +1,9 @@
 using Photon.Pun;
 using Photon.Realtime;
+<<<<<<< HEAD
 using System.Collections.Generic;
+=======
+>>>>>>> ProgramacionOnline/master
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -17,7 +20,7 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     #endregion PHOTON  
 
     #region CANVAS - INICIO  
-    [Header("Canvas - Inicio")]
+    [Header("\nCanvas - Inicio")]
     [SerializeField] private GameObject canvasInicio;
     [SerializeField] private TMP_InputField inputNickName;
     [SerializeField] private Button botonEntrar;
@@ -40,28 +43,58 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     {
         notificacionesInicio.text = "";
 
-        Invoke("DelayConectando", 1);
+        Invoke("DelayConectado", 1);
     }
 
-    private void DelayConectando()
+    private void DelayConectado()
     {
         botonEntrar.interactable = true;
     }
 
     private void Entrar()
     {
+<<<<<<< HEAD
 
         if (!string.IsNullOrEmpty(inputNickName.text))
         {
             PhotonNetwork.NickName = inputNickName.text;
             notificacionesInicio.text = "Entrando al lobby...";
 
+=======
+        string nickName = inputNickName.text.Trim();
+        if (string.IsNullOrEmpty(nickName))
+        {
+            notificacionesInicio.text = "El nombre de usuario no puede estar vacío.";
+            return;
+        }
+
+        if (nickName.Length < 3 || nickName.Length > 10)
+        {
+            notificacionesInicio.text = "El nombre de usuario debe tener entre 3 y 10 caracteres.";
+            return;
+        }
+
+        PhotonNetwork.NickName = nickName;
+
+        if (PhotonNetwork.CountOfRooms == 0)
+        {
+            notificacionesInicio.text = "Creando nueva sala...";
+
+            var conf = new RoomOptions() { MaxPlayers = 10 };
+
+            bool conectando = PhotonNetwork.CreateRoom("XP", conf);
+
+            if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
+>>>>>>> ProgramacionOnline/master
         }
         else
         {
-            notificacionesInicio.text = "Por favor, ingresa un nombre de usuario.";
+            notificacionesInicio.text = "Uniéndose a la sala...";
+            bool conectando = PhotonNetwork.JoinRoom("XP");
+            if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
         }
     }
+<<<<<<< HEAD
 
     #endregion CANVAS - INICIO  
 
@@ -105,7 +138,18 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         }
     }
 
+=======
+>>>>>>> ProgramacionOnline/master
 }
+#endregion
 
+<<<<<<< HEAD
 #endregion
 #endregion
+=======
+//Conectar a Photon automáticamente al iniciar la escena 
+
+//Evitar que se pueda conectar si el Nickname está vacío o tiene más de 10 caracteres
+
+//Mostrar en las notificaciones de Conexión a Photon y filtro de Nickname
+>>>>>>> ProgramacionOnline/master
