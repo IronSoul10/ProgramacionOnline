@@ -1,11 +1,7 @@
 using Photon.Pun;
 using Photon.Realtime;
-<<<<<<< HEAD
 using System.Collections.Generic;
-=======
->>>>>>> ProgramacionOnline/master
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +13,28 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     {
         Conectado();
     }
+
+    public override void OnCreatedRoom()
+    {
+        
+    }
+
+    public override void OnJoinedRoom()
+    {
+        PhotonNetwork.AutomaticallySyncScene = true;
+        canvasInicio.SetActive(false);
+        canvasSeleccion.SetActive(true);
+        CargarSlotJugadores();
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        CrearSlotJugador(newPlayer);
+    }
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        EliminarSlot(otherPlayer);
+    }
     #endregion PHOTON  
 
     #region CANVAS - INICIO  
@@ -25,6 +43,16 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [SerializeField] private TMP_InputField inputNickName;
     [SerializeField] private Button botonEntrar;
     [SerializeField] private TextMeshProUGUI notificacionesInicio;
+
+
+    [Header("Canvas - Seleccion")]
+    [SerializeField] private GameObject canvasSeleccion;
+
+
+    #region SELECCION JUGADORES
+    [Header("Seleccion Jugadores")]
+    [SerializeField] private Transform panelJugadores;
+    [SerializeField] private SlotJugador pfSlotJugador;
 
     private void Start()
     {
@@ -53,60 +81,49 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     private void Entrar()
     {
-<<<<<<< HEAD
 
         if (!string.IsNullOrEmpty(inputNickName.text))
         {
             PhotonNetwork.NickName = inputNickName.text;
             notificacionesInicio.text = "Entrando al lobby...";
 
-=======
-        string nickName = inputNickName.text.Trim();
-        if (string.IsNullOrEmpty(nickName))
-        {
-            notificacionesInicio.text = "El nombre de usuario no puede estar vacío.";
-            return;
-        }
+            string nickName = inputNickName.text.Trim();
+            if (string.IsNullOrEmpty(nickName))
+            {
+                notificacionesInicio.text = "El nombre de usuario no puede estar vacío.";
+                return;
+            }
 
-        if (nickName.Length < 3 || nickName.Length > 10)
-        {
-            notificacionesInicio.text = "El nombre de usuario debe tener entre 3 y 10 caracteres.";
-            return;
-        }
+            if (nickName.Length < 3 || nickName.Length > 10)
+            {
+                notificacionesInicio.text = "El nombre de usuario debe tener entre 3 y 10 caracteres.";
+                return;
+            }
 
-        PhotonNetwork.NickName = nickName;
+            PhotonNetwork.NickName = nickName;
 
-        if (PhotonNetwork.CountOfRooms == 0)
-        {
-            notificacionesInicio.text = "Creando nueva sala...";
+            if (PhotonNetwork.CountOfRooms == 0)
+            {
+                notificacionesInicio.text = "Creando nueva sala...";
 
-            var conf = new RoomOptions() { MaxPlayers = 10 };
+                var conf = new RoomOptions() { MaxPlayers = 10 };
 
-            bool conectando = PhotonNetwork.CreateRoom("XP", conf);
+                bool conectando = PhotonNetwork.CreateRoom("XP", conf);
 
-            if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
->>>>>>> ProgramacionOnline/master
-        }
-        else
-        {
-            notificacionesInicio.text = "Uniéndose a la sala...";
-            bool conectando = PhotonNetwork.JoinRoom("XP");
-            if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
+                if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
+            }
+            else
+            {
+                notificacionesInicio.text = "Uniéndose a la sala...";
+                bool conectando = PhotonNetwork.JoinRoom("XP");
+                if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
+            }
         }
     }
-<<<<<<< HEAD
 
     #endregion CANVAS - INICIO  
 
-    #region Canvas Seleccion
-
-    [Header("Canvas - Seleccion")]
-    [SerializeField] private GameObject canvasSeleccion;
-
-    #region SELECCION JUGADORES
-    [Header("Seleccion Jugadores")]
-    [SerializeField] private Transform panelJugadores;
-    [SerializeField] private SlotJugador pfSlotJugador;
+    #region Canvas Seleccion Jugadores
 
     private static Dictionary<Player, SlotJugador> dicJugadores = new Dictionary<Player, SlotJugador>();
 
@@ -125,31 +142,17 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
         {
             CrearSlotJugador(player);
-            //!PersonajeActualizado(player);
         }
     }
 
     private void EliminarSlot(Player player)
     {
-        if (dicJugadores.ContainsKey(player))
-        {
-            Destroy(dicJugadores[player].gameObject);
-            dicJugadores.Remove(player);
-        }
-    }
+        SlotJugador slot = dicJugadores[player];
+        dicJugadores.Remove(player);
+        Destroy(slot.gameObject);
 
-=======
->>>>>>> ProgramacionOnline/master
+    }
 }
 #endregion
 
-<<<<<<< HEAD
 #endregion
-#endregion
-=======
-//Conectar a Photon automáticamente al iniciar la escena 
-
-//Evitar que se pueda conectar si el Nickname está vacío o tiene más de 10 caracteres
-
-//Mostrar en las notificaciones de Conexión a Photon y filtro de Nickname
->>>>>>> ProgramacionOnline/master
