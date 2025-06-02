@@ -1,9 +1,12 @@
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
+
 
 public class ControlLobby : MonoBehaviourPunCallbacks
 {
@@ -16,7 +19,7 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     public override void OnCreatedRoom()
     {
-        
+
     }
 
     public override void OnJoinedRoom()
@@ -152,7 +155,41 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         Destroy(slot.gameObject);
 
     }
-}
-#endregion
 
-#endregion
+    #endregion
+
+    #endregion
+
+    #region CHAT
+    [Header("Chat")]
+    [SerializeField] private Transform scrollView;
+    [SerializeField] private Transform content;
+    [SerializeField] private TextMeshProUGUI textChat;
+    [SerializeField] private TMP_InputField inputMensaje;
+    [SerializeField] private Button botonEnviar;
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Return) && inputMensaje.isFocused)
+        {
+            EnviarMensaje();
+        }
+    }
+    private void EnviarMensaje()
+    {
+        string mensaje = inputMensaje.text;
+
+        if (mensaje == string.Empty) return;
+
+        if (mensaje.Length > 30)
+        {
+            mensaje = mensaje.Substring(0, 30);
+        }
+
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+
+     
+    }
+}
+
+    #endregion
