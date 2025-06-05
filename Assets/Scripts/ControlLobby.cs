@@ -1,6 +1,5 @@
 using Photon.Pun;
 using Photon.Realtime;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -162,34 +161,94 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     #region CHAT
     [Header("Chat")]
-    [SerializeField] private Transform scrollView;
-    [SerializeField] private Transform content;
+    [SerializeField] private RectTransform scrollView;
+    [SerializeField] private RectTransform content;
     [SerializeField] private TextMeshProUGUI textChat;
     [SerializeField] private TMP_InputField inputMensaje;
     [SerializeField] private Button botonEnviar;
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Return) && inputMensaje.isFocused)
+        if (Input.GetKeyDown(KeyCode.Return))
         {
             EnviarMensaje();
         }
     }
     private void EnviarMensaje()
     {
+        //Obtenemos el string del input field
         string mensaje = inputMensaje.text;
 
+        // Verificamos que el mensaje no este vacio
         if (mensaje == string.Empty) return;
 
+        //Limitamos el mensaje a 30 caracteres
         if (mensaje.Length > 30)
         {
             mensaje = mensaje.Substring(0, 30);
         }
 
+        //Obtenemos propiedades de la sala
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-     
+        //Guardamos el value del pair con Key "Chat" como string
+        string stringChat = propiedades.ContainsKey("Chat") ? propiedades["Chat"] as string : "";
+
+        // Añade salto de línea si ya hay mensajes previos
+        if (!string.IsNullOrEmpty(stringChat))
+            stringChat += "\n";
+
+        //Conectamos nuestros mensajes al chat ya existente
+        stringChat += $"{PhotonNetwork.NickName}: {mensaje}";
+
+        //Guardamos los cambios en el Hashtable
+        propiedades["Chat"] = stringChat;
+
+        //Aplicamnos los cambios al Photo
+        PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
+
+        //Limpiar el Imput
+        inputMensaje.text = string.Empty;
+
+        //Para recuperar el foco del Imput que se pierde al enviar el mensaje
+        inputMensaje.ActivateInputField();
+
+        //Actualizamos el chat
+        ActualizarChat();
+
+    }
+
+    private void ActualizarChat()
+    {
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+
+        if (propiedades.ContainsKey("Chat"))
+        {
+            //Obtenemos el string del chat
+            string stringChat = propiedades["Chat"] as string;
+
+            //Asignamos el string al textChat
+            textChat.text = stringChat;
+
+            float offset = textChat.rectTransform.anchoredPosition.y;
+
+            int lineas = textChat.textInfo.lineCount + 1;
+
+            float alturaLinea = 31.5f;
+
+            float alturaTotal = lineas * alturaLinea + offset;
+
+            content.sizeDelta = new Vector2(content.sizeDelta.x, alturaTotal);
+
+            if (content.sizeDelta.y > scrollView.sizeDelta.y)
+            {
+                Vector3 posicionContent = content.localPosition;
+                posicionContent.y = content.sizeDelta.y - scrollView.sizeDelta.y;
+                content.localPosition = posicionContent;
+            }
+
+        }
     }
 }
 
-    #endregion
+#endregion
