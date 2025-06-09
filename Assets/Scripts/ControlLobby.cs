@@ -1,5 +1,6 @@
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -18,7 +19,8 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     public override void OnCreatedRoom()
     {
-
+        SalaCreada();
+        IniciarPartida();
     }
 
     public override void OnJoinedRoom()
@@ -26,7 +28,15 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         PhotonNetwork.AutomaticallySyncScene = true;
         canvasInicio.SetActive(false);
         canvasSeleccion.SetActive(true);
+
+        //Cargamos todos los slots de jugadores
         CargarSlotJugadores();
+
+        //Actualizamos el chat para mostrar el historial si somo nuevos
+        ActualizarChat();
+
+        //Control Spam
+        StartCoroutine(CrControlSpam());
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
@@ -37,6 +47,13 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     {
         EliminarSlot(otherPlayer);
     }
+
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        // Actualizar el chat
+        ActualizarChat();
+    }
+
     #endregion PHOTON  
 
     #region CANVAS - INICIO  
@@ -49,6 +66,7 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     [Header("Canvas - Seleccion")]
     [SerializeField] private GameObject canvasSeleccion;
+    [SerializeField] private Button botonIniciarPartida;
 
 
     #region SELECCION JUGADORES
@@ -63,8 +81,11 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
         notificacionesInicio.text = "Conectandose...";
 
+        //Botones
         botonEntrar.interactable = false;
         botonEntrar.onClick.AddListener(Entrar);
+        botonEntrar.onClick.AddListener(EnviarMensaje);
+        botonIniciarPartida.gameObject.SetActive(false);
 
         PhotonNetwork.ConnectUsingSettings();
     }
@@ -129,6 +150,20 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     private static Dictionary<Player, SlotJugador> dicJugadores = new Dictionary<Player, SlotJugador>();
 
+
+    private void IniciarPartida()
+    {
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+        propiedades["partida Iniciada"] = true;
+        PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
+    }
+
+    private void SalaCreada()
+    {
+        botonIniciarPartida.gameObject.SetActive(true);
+        botonIniciarPartida.onClick.AddListener(IniciarPartida);
+    }
+
     private void CrearSlotJugador(Player player)
     {
         SlotJugador slot = Instantiate(pfSlotJugador, panelJugadores);
@@ -167,6 +202,8 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [SerializeField] private TMP_InputField inputMensaje;
     [SerializeField] private Button botonEnviar;
 
+    private int mensajesEnviados = 0;
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Return))
@@ -176,6 +213,8 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     }
     private void EnviarMensaje()
     {
+        if (mensajesEnviados >= 4) return;
+
         //Obtenemos el string del input field
         string mensaje = inputMensaje.text;
 
@@ -191,15 +230,17 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         //Obtenemos propiedades de la sala
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-        //Guardamos el value del pair con Key "Chat" como string
-        string stringChat = propiedades.ContainsKey("Chat") ? propiedades["Chat"] as string : "";
+        // Comprobacion
+        string stringChat = propiedades.ContainsKey("Chat") && propiedades["Chat"] != null ? propiedades["Chat"].ToString() : "";
 
-        // Añade salto de línea si ya hay mensajes previos
-        if (!string.IsNullOrEmpty(stringChat))
-            stringChat += "\n";
+        //Comprobacion
+        if (!string.IsNullOrEmpty(stringChat)) stringChat += "\n"; stringChat += $"{PhotonNetwork.NickName}: {mensaje}";
 
-        //Conectamos nuestros mensajes al chat ya existente
-        stringChat += $"{PhotonNetwork.NickName}: {mensaje}";
+        ////Guardamos el value del pair con Key "Chat" como string
+        //string stringChat = propiedades["Chat"].ToString();
+
+        ////Conectamos nuestros mensajes al chat ya existente
+        //stringChat += $"\n{PhotonNetwork.NickName}: {mensaje}";
 
         //Guardamos los cambios en el Hashtable
         propiedades["Chat"] = stringChat;
@@ -207,14 +248,14 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         //Aplicamnos los cambios al Photo
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
 
+        //Aumentamos la cantidad de mensajes enviados  
+        mensajesEnviados++;
+
         //Limpiar el Imput
         inputMensaje.text = string.Empty;
 
         //Para recuperar el foco del Imput que se pierde al enviar el mensaje
         inputMensaje.ActivateInputField();
-
-        //Actualizamos el chat
-        ActualizarChat();
 
     }
 
@@ -222,32 +263,45 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     {
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-        if (propiedades.ContainsKey("Chat"))
+        if (!propiedades.ContainsKey("Chat")) return;
+
+        //Obtenemos el string del chat
+        string stringChat = propiedades["Chat"].ToString();
+
+        //Asignamos el string al textChat
+        textChat.text = stringChat;
+
+        float offset = -textChat.rectTransform.anchoredPosition.y;
+
+        int lineas = textChat.textInfo.lineCount + 1;
+
+        float alturaLinea = -50f;
+
+        float alturaTotal = lineas * alturaLinea + offset;
+
+        content.sizeDelta = new Vector2(content.sizeDelta.x, alturaTotal);
+
+        if (content.sizeDelta.y > scrollView.sizeDelta.y)
         {
-            //Obtenemos el string del chat
-            string stringChat = propiedades["Chat"] as string;
-
-            //Asignamos el string al textChat
-            textChat.text = stringChat;
-
-            float offset = textChat.rectTransform.anchoredPosition.y;
-
-            int lineas = textChat.textInfo.lineCount + 1;
-
-            float alturaLinea = 55f;
-
-            float alturaTotal = lineas * alturaLinea + offset;
-
-            content.sizeDelta = new Vector2(content.sizeDelta.x, alturaTotal);
-
-            if (content.sizeDelta.y > scrollView.sizeDelta.y)
-            {
-                Vector3 posicionContent = content.localPosition;
-                posicionContent.y = content.sizeDelta.y - scrollView.sizeDelta.y;
-                content.localPosition = posicionContent;
-            }
-
+            Vector3 posicionContent = content.localPosition;
+            posicionContent.y = content.sizeDelta.y - scrollView.sizeDelta.y;
+            content.localPosition = posicionContent;
         }
+
+    }
+
+    private IEnumerator CrControlSpam()
+    {
+    Inicio: //Marcador
+
+        yield return new WaitForSeconds(2f); //espera 2 segundos
+
+        if (mensajesEnviados > 0) //Si ha enviado mensaje
+        {
+            mensajesEnviados--; // Cada 2s le resta
+        }
+
+        goto Inicio; //Regresar al Marcador
     }
 }
 
