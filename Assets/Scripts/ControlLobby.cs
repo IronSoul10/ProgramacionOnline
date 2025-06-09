@@ -234,7 +234,7 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
             int lineas = textChat.textInfo.lineCount + 1;
 
-            float alturaLinea = 31.5f;
+            float alturaLinea = 55f;
 
             float alturaTotal = lineas * alturaLinea + offset;
 
