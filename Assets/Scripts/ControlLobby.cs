@@ -213,7 +213,7 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     }
     private void EnviarMensaje()
     {
-        if (mensajesEnviados >= 4) return;
+        if (mensajesEnviados >= 1) return;
 
         //Obtenemos el string del input field
         string mensaje = inputMensaje.text;
@@ -294,11 +294,13 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     {
     Inicio: //Marcador
 
+        Debug.Log("Control de spawn Activado, espera 2 segundos");
         yield return new WaitForSeconds(2f); //espera 2 segundos
 
         if (mensajesEnviados > 0) //Si ha enviado mensaje
         {
             mensajesEnviados--; // Cada 2s le resta
+            Debug.Log("Ya puedes enviar otro mensaje. mensajesEnviados = " + mensajesEnviados);
         }
 
         goto Inicio; //Regresar al Marcador

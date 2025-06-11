@@ -172,7 +172,6 @@ MonoBehaviour:
   textChat: {fileID: 193816315}
   inputMensaje: {fileID: 754452531}
   botonEnviar: {fileID: 839625089}
-  alturaLinea: -60
 --- !u!4 &200797750
 Transform:
   m_ObjectHideFlags: 0
@@ -843,7 +842,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6335222836538200337, guid: e2c34b71a8924004f9403c5d75edf47f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 20.000109
+      value: 20.000198
       objectReference: {fileID: 0}
     - target: {fileID: 6480549427495873134, guid: e2c34b71a8924004f9403c5d75edf47f, type: 3}
       propertyPath: m_AnchorMax.x
@@ -855,6 +854,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6480549427495873134, guid: e2c34b71a8924004f9403c5d75edf47f, type: 3}
       propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6480549427495873134, guid: e2c34b71a8924004f9403c5d75edf47f, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9213226301415234138, guid: e2c34b71a8924004f9403c5d75edf47f, type: 3}
