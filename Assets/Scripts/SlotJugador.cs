@@ -17,4 +17,16 @@ public class SlotJugador : MonoBehaviour
             textNickname.text = value.NickName;
         }
     }
+
+    public Image PersonajeImage
+    {
+        set
+        {
+            //si tenia una imagen instancia la borramos
+            if(emptyImage.childCount > 0) Destroy(emptyImage.GetChild(0).gameObject);
+
+            // Instanciamos la nueva imagen del personaje
+            Instantiate(value, emptyImage);
+        }
+    }
 }

@@ -54,6 +54,12 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         ActualizarChat();
     }
 
+    public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
+    {
+        // Actualizar el personaje del jugador
+        PersonajeActualizado(targetPlayer);
+    }
+
     #endregion PHOTON  
 
     #region CANVAS - INICIO  
@@ -73,6 +79,8 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [Header("Seleccion Jugadores")]
     [SerializeField] private Transform panelJugadores;
     [SerializeField] private SlotJugador pfSlotJugador;
+
+   
 
     private void Start()
     {
@@ -179,6 +187,7 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
         {
             CrearSlotJugador(player);
+            PersonajeActualizado(player);
         }
     }
 
@@ -305,6 +314,45 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
         goto Inicio; //Regresar al Marcador
     }
-}
+    #endregion
 
-#endregion
+    #region Canvas Seleccion Personaje
+
+    public static void SeleccionPersonaje(string nombrePersonaje)
+    {
+        // Obtenemos las propiedades
+        Hashtable propiedades = PhotonNetwork.LocalPlayer.CustomProperties;
+
+        //Guardamos el nombre del personaje seleccionado
+        propiedades["Personaje"] = nombrePersonaje;
+
+        //Aplicamos los cambios al Photon
+        PhotonNetwork.LocalPlayer.SetCustomProperties(propiedades);
+    }
+
+    public static void PersonajeActualizado(Player player)
+    {
+        // Obtenemos las propiedades
+        Hashtable propiedades = PhotonNetwork.LocalPlayer.CustomProperties;
+
+        //Return sino existe la propiedad
+        if (!propiedades.ContainsKey("Personaje")) return;
+
+        //Obtenemos el nombre del personaje
+        string nombrePersonaje = propiedades["Personaje"].ToString();
+
+        //Guardamos la ruta de donde esta el prefab del personaje
+        string ruta = $"Personajes/{nombrePersonaje} /{nombrePersonaje} Image";
+
+        //Obtenemos el prefab imagen del personaje
+        Image personajeImage = Resources.Load<Image>(ruta);
+
+        //Obtenemnos el SlotJugador del player
+        SlotJugador slotJugador = dicJugadores[player];
+
+        //Lo mostramos en pantalla
+        slotJugador.PersonajeImage = personajeImage;
+        #endregion
+
+    }
+}
