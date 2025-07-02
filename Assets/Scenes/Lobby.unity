@@ -4909,18 +4909,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   canvasInicio: {fileID: 5032127405853317660}
   inputNickName: {fileID: 508149206922311150}
-  botonEntrar: {fileID: 0}
-  notificacionesInicio: {fileID: 0}
-  canvasSeleccion: {fileID: 0}
-  botonIniciarPartida: {fileID: 0}
-  panelJugadores: {fileID: 0}
-  pfSlotJugador: {fileID: 0}
+  botonEntrar: {fileID: 8440172904617252716}
+  notificacionesInicio: {fileID: 5753425865599151251}
+  canvasSeleccion: {fileID: 2895465143389124483}
+  botonIniciarPartida: {fileID: 459942786}
+  panelJugadores: {fileID: 2137897208}
+  pfSlotJugador: {fileID: 8884821461359223671, guid: a95bafda2347ac54ab14be52408cfd07, type: 3}
   pfslotJugador: {fileID: 0}
-  scrollView: {fileID: 0}
-  content: {fileID: 0}
-  textChat: {fileID: 0}
-  inputMensaje: {fileID: 0}
-  botonEnviar: {fileID: 0}
+  scrollView: {fileID: 284603211811600045}
+  content: {fileID: 7238823359927014179}
+  textChat: {fileID: 8781298459040888957}
+  inputMensaje: {fileID: 2722485050111925774}
+  botonEnviar: {fileID: 2467624441581506415}
 --- !u!4 &1638298887
 Transform:
   m_ObjectHideFlags: 0
@@ -8272,7 +8272,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.9}
   m_AnchorMax: {x: 0.5, y: 0.9}
-  m_AnchoredPosition: {x: -283.4352, y: 63.00001}
+  m_AnchoredPosition: {x: -283.4352, y: 63.00024}
   m_SizeDelta: {x: 580.8972, y: 630}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &7341156101768310138
