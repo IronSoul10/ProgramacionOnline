@@ -1,7 +1,7 @@
+using System.Collections.Generic;
+using System.Collections;
 using Photon.Pun;
 using Photon.Realtime;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,22 +20,25 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     public override void OnCreatedRoom()
     {
         SalaCreada();
-        IniciarPartida();
+        InicializarChat();
     }
 
     public override void OnJoinedRoom()
     {
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+
+        if (propiedades.ContainsKey("PartidaIniciada"))
+        {
+            partidaIniciada = true;
+            PhotonNetwork.LeaveRoom();
+            notificacionesInicio.text = "la partida ya esta iniciada";
+            return;
+        }
         PhotonNetwork.AutomaticallySyncScene = true;
         canvasInicio.SetActive(false);
         canvasSeleccion.SetActive(true);
-
-        //Cargamos todos los slots de jugadores
         CargarSlotJugadores();
-
-        //Actualizamos el chat para mostrar el historial si somo nuevos
         ActualizarChat();
-
-        //Control Spam
         StartCoroutine(CrControlSpam());
     }
 
@@ -50,15 +53,13 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
-        // Actualizar el chat
         ActualizarChat();
     }
-
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
-        // Actualizar el personaje del jugador
         PersonajeActualizado(targetPlayer);
     }
+
 
     #endregion PHOTON  
 
@@ -68,6 +69,7 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [SerializeField] private TMP_InputField inputNickName;
     [SerializeField] private Button botonEntrar;
     [SerializeField] private TextMeshProUGUI notificacionesInicio;
+    private bool partidaIniciada = false;
 
 
     [Header("Canvas - Seleccion")]
@@ -80,8 +82,6 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [SerializeField] private Transform panelJugadores;
     [SerializeField] private SlotJugador pfSlotJugador;
 
-   
-
     private void Start()
     {
         canvasInicio.SetActive(true);
@@ -89,10 +89,9 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
         notificacionesInicio.text = "Conectandose...";
 
-        //Botones
         botonEntrar.interactable = false;
         botonEntrar.onClick.AddListener(Entrar);
-        botonEntrar.onClick.AddListener(EnviarMensaje);
+        botonEnviar.onClick.AddListener(EnviarMensaje);
         botonIniciarPartida.gameObject.SetActive(false);
 
         PhotonNetwork.ConnectUsingSettings();
@@ -100,9 +99,13 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     private void Conectado()
     {
-        notificacionesInicio.text = "";
+        if (!partidaIniciada)
+        {
+            notificacionesInicio.text = "";
 
-        Invoke("DelayConectado", 1);
+            Invoke("DelayConectado", 1);
+        }
+
     }
 
     private void DelayConectado()
@@ -152,17 +155,10 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         }
     }
 
-    #endregion CANVAS - INICIO  
-
-    #region Canvas Seleccion Jugadores
-
-    private static Dictionary<Player, SlotJugador> dicJugadores = new Dictionary<Player, SlotJugador>();
-
-
     private void IniciarPartida()
     {
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
-        propiedades["partida Iniciada"] = true;
+        propiedades["PartidaIniciada"] = true;
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
     }
 
@@ -171,6 +167,16 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         botonIniciarPartida.gameObject.SetActive(true);
         botonIniciarPartida.onClick.AddListener(IniciarPartida);
     }
+
+
+    #endregion CANVAS - INICIO  
+
+    #region Canvas Seleccion Jugadores
+
+    [Header("Jugadores")]
+    [SerializeField] private SlotJugador pfslotJugador;
+
+    private static Dictionary<Player, SlotJugador> dicJugadores = new Dictionary<Player, SlotJugador>();
 
     private void CrearSlotJugador(Player player)
     {
@@ -210,8 +216,15 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [SerializeField] private TextMeshProUGUI textChat;
     [SerializeField] private TMP_InputField inputMensaje;
     [SerializeField] private Button botonEnviar;
-
     private int mensajesEnviados = 0;
+
+
+    private void InicializarChat()
+    {
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+        propiedades.Add("Chat", "Sala creada por: " + PhotonNetwork.NickName);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
+    }
 
     private void Update()
     {
@@ -222,49 +235,36 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     }
     private void EnviarMensaje()
     {
-        if (mensajesEnviados >= 1) return;
+        if (mensajesEnviados >= 4) return;
 
-        //Obtenemos el string del input field
         string mensaje = inputMensaje.text;
 
-        // Verificamos que el mensaje no este vacio
         if (mensaje == string.Empty) return;
 
-        //Limitamos el mensaje a 30 caracteres
         if (mensaje.Length > 30)
         {
             mensaje = mensaje.Substring(0, 30);
         }
 
-        //Obtenemos propiedades de la sala
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-        // Comprobacion
-        string stringChat = propiedades.ContainsKey("Chat") && propiedades["Chat"] != null ? propiedades["Chat"].ToString() : "";
+        string stringChat = propiedades.ContainsKey("Chat") ? propiedades["Chat"] as string : "";
 
-        //Comprobacion
-        if (!string.IsNullOrEmpty(stringChat)) stringChat += "\n"; stringChat += $"{PhotonNetwork.NickName}: {mensaje}";
+        if (!string.IsNullOrEmpty(stringChat))
+            stringChat += "\n";
 
-        ////Guardamos el value del pair con Key "Chat" como string
-        //string stringChat = propiedades["Chat"].ToString();
+        stringChat += $"{PhotonNetwork.NickName}: {mensaje}";
 
-        ////Conectamos nuestros mensajes al chat ya existente
-        //stringChat += $"\n{PhotonNetwork.NickName}: {mensaje}";
-
-        //Guardamos los cambios en el Hashtable
         propiedades["Chat"] = stringChat;
 
-        //Aplicamnos los cambios al Photo
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
 
-        //Aumentamos la cantidad de mensajes enviados  
         mensajesEnviados++;
-
-        //Limpiar el Imput
         inputMensaje.text = string.Empty;
 
-        //Para recuperar el foco del Imput que se pierde al enviar el mensaje
         inputMensaje.ActivateInputField();
+
+        ActualizarChat();
 
     }
 
@@ -272,87 +272,75 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     {
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-        if (!propiedades.ContainsKey("Chat")) return;
-
-        //Obtenemos el string del chat
-        string stringChat = propiedades["Chat"].ToString();
-
-        //Asignamos el string al textChat
-        textChat.text = stringChat;
-
-        float offset = -textChat.rectTransform.anchoredPosition.y;
-
-        int lineas = textChat.textInfo.lineCount + 1;
-
-        float alturaLinea = -50f;
-
-        float alturaTotal = lineas * alturaLinea + offset;
-
-        content.sizeDelta = new Vector2(content.sizeDelta.x, alturaTotal);
-
-        if (content.sizeDelta.y > scrollView.sizeDelta.y)
+        if (propiedades.ContainsKey("Chat"))
         {
-            Vector3 posicionContent = content.localPosition;
-            posicionContent.y = content.sizeDelta.y - scrollView.sizeDelta.y;
-            content.localPosition = posicionContent;
-        }
+            string stringChat = propiedades["Chat"] as string;
 
+            textChat.text = stringChat;
+
+            float offset = textChat.rectTransform.anchoredPosition.y;
+
+            int lineas = textChat.textInfo.lineCount + 1;
+
+            float alturaLinea = 55f;
+
+            float alturaTotal = lineas * alturaLinea + offset;
+
+            content.sizeDelta = new Vector2(content.sizeDelta.x, alturaTotal);
+
+            if (content.sizeDelta.y > scrollView.sizeDelta.y)
+            {
+                Vector3 posicionContent = content.localPosition;
+                posicionContent.y = content.sizeDelta.y - scrollView.sizeDelta.y;
+                content.localPosition = posicionContent;
+            }
+
+        }
     }
 
     private IEnumerator CrControlSpam()
     {
-    Inicio: //Marcador
+    Inicio:
+        yield return new WaitForSeconds(2);
 
-        Debug.Log("Control de spawn Activado, espera 2 segundos");
-        yield return new WaitForSeconds(2f); //espera 2 segundos
+        if (mensajesEnviados > 0)
+            mensajesEnviados--;
 
-        if (mensajesEnviados > 0) //Si ha enviado mensaje
-        {
-            mensajesEnviados--; // Cada 2s le resta
-            Debug.Log("Ya puedes enviar otro mensaje. mensajesEnviados = " + mensajesEnviados);
-        }
+        goto Inicio;
 
-        goto Inicio; //Regresar al Marcador
     }
     #endregion
 
-    #region Canvas Seleccion Personaje
+    #region SELECTION - Personajes
 
     public static void SeleccionPersonaje(string nombrePersonaje)
     {
-        // Obtenemos las propiedades
+
         Hashtable propiedades = PhotonNetwork.LocalPlayer.CustomProperties;
 
-        //Guardamos el nombre del personaje seleccionado
         propiedades["Personaje"] = nombrePersonaje;
 
-        //Aplicamos los cambios al Photon
         PhotonNetwork.LocalPlayer.SetCustomProperties(propiedades);
     }
 
     public static void PersonajeActualizado(Player player)
     {
-        // Obtenemos las propiedades
-        Hashtable propiedades = PhotonNetwork.LocalPlayer.CustomProperties;
+        Hashtable propiedades = player.CustomProperties;
 
-        //Return sino existe la propiedad
         if (!propiedades.ContainsKey("Personaje")) return;
 
-        //Obtenemos el nombre del personaje
         string nombrePersonaje = propiedades["Personaje"].ToString();
 
-        //Guardamos la ruta de donde esta el prefab del personaje
-        string ruta = $"Personajes/{nombrePersonaje} /{nombrePersonaje} Image";
+        string ruta = $"Personajes/{nombrePersonaje}/{nombrePersonaje} Image";
 
-        //Obtenemos el prefab imagen del personaje
         Image personajeImage = Resources.Load<Image>(ruta);
 
-        //Obtenemnos el SlotJugador del player
         SlotJugador slotJugador = dicJugadores[player];
 
-        //Lo mostramos en pantalla
         slotJugador.PersonajeImage = personajeImage;
-        #endregion
-
     }
+
+    #endregion SELECTION - Personajes
+
+
 }
