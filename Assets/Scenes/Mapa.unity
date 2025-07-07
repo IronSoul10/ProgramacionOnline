@@ -13868,6 +13868,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de48602c22b9ab14cb0137e47ba00397, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  camara: {fileID: 1110389337}
+  spawnPoints: {fileID: 1593507283}
 --- !u!114 &8481864475062717446
 MonoBehaviour:
   m_ObjectHideFlags: 0

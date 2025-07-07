@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -7140049069075792419}
   - component: {fileID: 8271002218415491690}
   - component: {fileID: -410030882506470192}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Edgar InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -189,6 +189,10 @@ PrefabInstance:
     - target: {fileID: 1894492332346481917, guid: 805737053f93eca4a851b989480a65c1, type: 3}
       propertyPath: m_Name
       value: Edgar Sprite
+      objectReference: {fileID: 0}
+    - target: {fileID: 1894492332346481917, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6022604861912802321, guid: 805737053f93eca4a851b989480a65c1, type: 3}
       propertyPath: m_LocalScale.x

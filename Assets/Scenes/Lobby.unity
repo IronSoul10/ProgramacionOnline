@@ -4832,7 +4832,7 @@ GameObject:
   - component: {fileID: 1638298887}
   - component: {fileID: 1638298886}
   m_Layer: 0
-  m_Name: ControlLoby2
+  m_Name: ControlLoby
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4858,7 +4858,6 @@ MonoBehaviour:
   botonIniciarPartida: {fileID: 459942786}
   panelJugadores: {fileID: 2137897208}
   pfSlotJugador: {fileID: 8884821461359223671, guid: a95bafda2347ac54ab14be52408cfd07, type: 3}
-  pfslotJugador: {fileID: 8884821461359223671, guid: a95bafda2347ac54ab14be52408cfd07, type: 3}
   scrollView: {fileID: 284603211811600045}
   content: {fileID: 7238823359927014179}
   textChat: {fileID: 8781298459040888957}
@@ -7388,7 +7387,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2472524755531548313}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999938
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7973,8 +7972,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -22.05951, y: 43.192627}
-  m_SizeDelta: {x: 504.7856, y: 543.6147}
+  m_AnchoredPosition: {x: -13.342987, y: -270}
+  m_SizeDelta: {x: 554.21, y: 525.2821}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &5942288924722620238
 GameObject:
@@ -8215,7 +8214,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.9}
   m_AnchorMax: {x: 0.5, y: 0.9}
-  m_AnchoredPosition: {x: -283.4352, y: 62.99998}
+  m_AnchoredPosition: {x: -283.4352, y: 63.000317}
   m_SizeDelta: {x: 580.8972, y: 630}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &7341156101768310138

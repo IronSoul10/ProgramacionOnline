@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -5712850545080889492}
   - component: {fileID: -8809928181853151799}
   - component: {fileID: 8998615703447804703}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Victor InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -189,6 +189,10 @@ PrefabInstance:
     - target: {fileID: 5092502247642844061, guid: a87b70adb1a60684aae01dfbd7655983, type: 3}
       propertyPath: m_Name
       value: Victor Sprite
+      objectReference: {fileID: 0}
+    - target: {fileID: 5092502247642844061, guid: a87b70adb1a60684aae01dfbd7655983, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5678793930579655653, guid: a87b70adb1a60684aae01dfbd7655983, type: 3}
       propertyPath: m_LocalScale.x

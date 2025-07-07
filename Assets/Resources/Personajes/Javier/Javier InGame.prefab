@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8813285842261738314}
   - component: {fileID: -399704588002575038}
   - component: {fileID: 577708949053110706}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Javier InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -189,6 +189,10 @@ PrefabInstance:
     - target: {fileID: 3710481390799368260, guid: 7ed32047940ce294a9c101274bfdc1a5, type: 3}
       propertyPath: m_Name
       value: Javier Sprite
+      objectReference: {fileID: 0}
+    - target: {fileID: 3710481390799368260, guid: 7ed32047940ce294a9c101274bfdc1a5, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8819724737072192881, guid: 7ed32047940ce294a9c101274bfdc1a5, type: 3}
       propertyPath: m_LocalScale.x

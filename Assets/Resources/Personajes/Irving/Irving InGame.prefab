@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -1386090439961785128}
   - component: {fileID: 5692686967216853818}
   - component: {fileID: -4640969399125590237}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Irving InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -246,6 +246,10 @@ PrefabInstance:
     - target: {fileID: 4701677263689378609, guid: 15c72716a4dd42c4fa69ce4bc4574763, type: 3}
       propertyPath: m_Name
       value: Irving Sprite
+      objectReference: {fileID: 0}
+    - target: {fileID: 4701677263689378609, guid: 15c72716a4dd42c4fa69ce4bc4574763, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

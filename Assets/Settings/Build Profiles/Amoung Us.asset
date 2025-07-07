@@ -52,6 +52,8 @@ MonoBehaviour:
     m_path: Assets/Photon/PhotonUnityNetworking/Demos/DemoSlotRacer/SlotCar-Scene.unity
   - m_enabled: 1
     m_path: Assets/Scenes/Lobby.unity
+  - m_enabled: 1
+    m_path: Assets/Scenes/Mapa.unity
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:
     m_Settings:

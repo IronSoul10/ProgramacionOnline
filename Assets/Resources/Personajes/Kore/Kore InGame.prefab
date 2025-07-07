@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8179489525452052587}
   - component: {fileID: 1355109292620816224}
   - component: {fileID: -5165259216312696037}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Kore InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -189,6 +189,10 @@ PrefabInstance:
     - target: {fileID: 3791722617491549123, guid: 159bc5a2b734f804f87f374ab4ec5c7a, type: 3}
       propertyPath: m_Name
       value: Kore Sprite
+      objectReference: {fileID: 0}
+    - target: {fileID: 3791722617491549123, guid: 159bc5a2b734f804f87f374ab4ec5c7a, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3947685249610956417, guid: 159bc5a2b734f804f87f374ab4ec5c7a, type: 3}
       propertyPath: m_LocalScale.x

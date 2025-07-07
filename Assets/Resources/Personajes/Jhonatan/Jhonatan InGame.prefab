@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -8971810312106188082}
   - component: {fileID: 3037116917863197706}
   - component: {fileID: -6837585681179904868}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Jhonatan InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -189,6 +189,10 @@ PrefabInstance:
     - target: {fileID: 5588888148714049751, guid: c810f49edd2cacf40946b8debea9167d, type: 3}
       propertyPath: m_Name
       value: Jhonatan Sprite
+      objectReference: {fileID: 0}
+    - target: {fileID: 5588888148714049751, guid: c810f49edd2cacf40946b8debea9167d, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6212882962269250593, guid: c810f49edd2cacf40946b8debea9167d, type: 3}
       propertyPath: m_LocalScale.x

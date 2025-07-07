@@ -1,7 +1,8 @@
-using System.Collections.Generic;
-using System.Collections;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -71,23 +72,12 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [SerializeField] private TextMeshProUGUI notificacionesInicio;
     private bool partidaIniciada = false;
 
-
-    [Header("Canvas - Seleccion")]
-    [SerializeField] private GameObject canvasSeleccion;
-    [SerializeField] private Button botonIniciarPartida;
-
-
-    #region SELECCION JUGADORES
-    [Header("Seleccion Jugadores")]
-    [SerializeField] private Transform panelJugadores;
-    [SerializeField] private SlotJugador pfSlotJugador;
-
     private void Start()
     {
         canvasInicio.SetActive(true);
         canvasSeleccion.SetActive(false);
 
-        notificacionesInicio.text = "Conectandose...";
+        notificacionesInicio.text = "Conectandose a PHOTON...";
 
         botonEntrar.interactable = false;
         botonEntrar.onClick.AddListener(Entrar);
@@ -115,51 +105,80 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     private void Entrar()
     {
+        string nickName = inputNickName.text;
 
-        if (!string.IsNullOrEmpty(inputNickName.text))
+        //verificamos que no este vacio el nickname
+        if (nickName == String.Empty)
         {
-            PhotonNetwork.NickName = inputNickName.text;
-            notificacionesInicio.text = "Entrando al lobby...";
+            notificacionesInicio.text = "El nickname esta vacio :C";
+            return;
+        }
 
-            string nickName = inputNickName.text.Trim();
-            if (string.IsNullOrEmpty(nickName))
-            {
-                notificacionesInicio.text = "El nombre de usuario no puede estar vacío.";
-                return;
-            }
+        //Verificamos que no tenga mas de 10 caracteres
+        if (nickName.Length > 10)
+        {
+            notificacionesInicio.text = "El nickname no puede tener mas de 10 caracteres";
+            return;
+        }
 
-            if (nickName.Length < 3 || nickName.Length > 10)
-            {
-                notificacionesInicio.text = "El nombre de usuario debe tener entre 3 y 10 caracteres.";
-                return;
-            }
+        //Gaurdamos nuestro nickname en Photon
+        PhotonNetwork.NickName = nickName;
 
-            PhotonNetwork.NickName = nickName;
+        notificacionesInicio.text = "Entrando al la Sala...";
 
-            if (PhotonNetwork.CountOfRooms == 0)
-            {
-                notificacionesInicio.text = "Creando nueva sala...";
+        //Si no hay salas creadas
+        if (PhotonNetwork.CountOfRooms == 0)
+        {
+            //Creamos las configuraciones de la sala
+            var config = new RoomOptions() { MaxPlayers = 12 };
 
-                var conf = new RoomOptions() { MaxPlayers = 10 };
-
-                bool conectando = PhotonNetwork.CreateRoom("XP", conf);
-
-                if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
-            }
-            else
-            {
-                notificacionesInicio.text = "Uniéndose a la sala...";
-                bool conectando = PhotonNetwork.JoinRoom("XP");
-                if (!conectando) notificacionesInicio.text = "No se pudo conectar a la sala.";
-            }
+            //Intentamos crear una nueva sala
+            bool conectado = PhotonNetwork.CreateRoom("XP", config);
+            if (!conectado) notificacionesInicio.text = "No se pudo crear la sala :(";
+        }
+        else
+        {
+            //Intentamos unirnos a la sala
+            bool conectado = PhotonNetwork.JoinRoom("XP");
+            if (!conectado) notificacionesInicio.text = "No se pudo unir a la sala :(";
         }
     }
 
+    #endregion CANVAS - INICIO
+
+    #region CANVAS - SELECCION
+
+    [Header("Canvas - Seleccion")]
+    [SerializeField] private GameObject canvasSeleccion;
+    [SerializeField] private Button botonIniciarPartida;
+    private bool cargandoMapa = false;
     private void IniciarPartida()
     {
+        //RETURN si ya le dimos anteriormente al boton
+        if (cargandoMapa) return;
+
+        //Indicamos que se esta cargando el mapa
+        botonIniciarPartida.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "Cargando Mapa...";
+
+        //Ciclar todos los jugadores
+        foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
+        {
+            Hashtable pp = player.CustomProperties;
+
+            //Sialguien no ha escogido personaje retornamos
+            if (!pp.ContainsKey("Personaje")) return;
+        }
+
+        //Iniciar en las propiedades que ya iniciamos la partida
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
         propiedades["PartidaIniciada"] = true;
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
+
+        //Indicamos que empiece a cargar el mapa
+        cargandoMapa = true;
+
+        //Cargamos el mapa
+        PhotonNetwork.LoadLevel("Mapa");
     }
 
     private void SalaCreada()
@@ -168,28 +187,30 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         botonIniciarPartida.onClick.AddListener(IniciarPartida);
     }
 
+    #region SELECCION JUGADORES
 
-    #endregion CANVAS - INICIO  
-
-    #region Canvas Seleccion Jugadores
-
-    [Header("Jugadores")]
-    [SerializeField] private SlotJugador pfslotJugador;
+    [Header("Seleccion Jugadores")]
+    [SerializeField] private Transform panelJugadores;
+    [SerializeField] private SlotJugador pfSlotJugador;
 
     private static Dictionary<Player, SlotJugador> dicJugadores = new Dictionary<Player, SlotJugador>();
 
     private void CrearSlotJugador(Player player)
     {
+        //Creamos el SlotJugador dentro de panelJugadores
         SlotJugador slot = Instantiate(pfSlotJugador, panelJugadores);
 
+        //Le pasamos la referencia la jugador
         slot.Player = player;
 
+        //Agregamos el par de Player/Slot al diccionario
         dicJugadores.Add(player, slot);
 
     }
 
     private void CargarSlotJugadores()
     {
+        //Ciclamos a todos los jugadores que hay en la sala
         foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
         {
             CrearSlotJugador(player);
@@ -199,17 +220,21 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
     private void EliminarSlot(Player player)
     {
+        //Obtenemos el Slot a que esta ligado al Jugador
         SlotJugador slot = dicJugadores[player];
+
+        //Eliminamos el par del diccionario, mediante la llave
         dicJugadores.Remove(player);
+
+        //Destruimos el Slot del UI
         Destroy(slot.gameObject);
 
     }
 
-    #endregion
+    #endregion SELECCION JUGADORES
 
-    #endregion
+    #region SELECCION CHAT
 
-    #region CHAT
     [Header("Chat")]
     [SerializeField] private RectTransform scrollView;
     [SerializeField] private RectTransform content;
@@ -218,129 +243,155 @@ public class ControlLobby : MonoBehaviourPunCallbacks
     [SerializeField] private Button botonEnviar;
     private int mensajesEnviados = 0;
 
-
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Return)) EnviarMensaje();
+    }
     private void InicializarChat()
     {
+        //Obtenemos las propiedades de la sala
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+
+        //Agregamos un nuevo par a la Hashtable
         propiedades.Add("Chat", "Sala creada por: " + PhotonNetwork.NickName);
+
+        //Aplicamos los cambios en Photon
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Return))
-        {
-            EnviarMensaje();
-        }
-    }
     private void EnviarMensaje()
     {
+        //Control Spam
         if (mensajesEnviados >= 4) return;
 
+        //Obtenemos el string del inputField
         string mensaje = inputMensaje.text;
 
+        //Verificamos que el mensaje no este vacio
         if (mensaje == string.Empty) return;
 
+        //Limitamos el mensaje a 30 caracteres
         if (mensaje.Length > 30)
         {
             mensaje = mensaje.Substring(0, 30);
         }
 
+        //Obtenemos las propiedades de la sala
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-        string stringChat = propiedades.ContainsKey("Chat") ? propiedades["Chat"] as string : "";
+        //Guardamos el value del par con key "Chat" como string
+        string stringChat = propiedades["Chat"].ToString();
 
-        if (!string.IsNullOrEmpty(stringChat))
-            stringChat += "\n";
+        //Conectamos nuestro mensaje al chat ya existente
+        stringChat = $"\n {PhotonNetwork.NickName}: {mensaje}";
 
-        stringChat += $"{PhotonNetwork.NickName}: {mensaje}";
-
+        //Guardamos los cambios en el Hashtable
         propiedades["Chat"] = stringChat;
 
+        //Aplicamos los cambios en Photon
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
 
+        //aumentamos la cantidad de mensajes Enviados
         mensajesEnviados++;
+
+        //Limpiar Input
         inputMensaje.text = string.Empty;
 
+        //Para recuperar el foco del input que se pierde al enviar el mensaje
         inputMensaje.ActivateInputField();
-
-        ActualizarChat();
-
     }
 
     private void ActualizarChat()
     {
+        //Obtenemos las propiedades
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-        if (propiedades.ContainsKey("Chat"))
+        //Verificamos que exista la llave Chat
+        if (!propiedades.ContainsKey("Chat")) return;
+
+        //Convertimos el Value a string
+        string stringChat = propiedades["Chat"].ToString();
+
+        //Actualizamos el TextMeshPro en pantalla
+        textChat.text = stringChat;
+
+        //Obtenemos el offset que tiene e txt chat con el Content
+        float offset = textChat.rectTransform.anchoredPosition.y;
+
+        //Obtenemos cuantas lineas lleva el chat
+        int lineas = textChat.textInfo.lineCount + 1;
+
+        //Obtenemos la altura de cada linea de texto
+        float alturaLinea = 120f;
+
+        //Obtenemos la altura total del texto
+        float alturaTotal = lineas * alturaLinea + offset;
+
+        //Asignamos la nueva altura al Content
+        content.sizeDelta = new Vector2(content.sizeDelta.x, alturaTotal);
+
+        //Movemos el content hasta abajo
+        if (content.sizeDelta.y > scrollView.sizeDelta.y)
         {
-            string stringChat = propiedades["Chat"] as string;
-
-            textChat.text = stringChat;
-
-            float offset = textChat.rectTransform.anchoredPosition.y;
-
-            int lineas = textChat.textInfo.lineCount + 1;
-
-            float alturaLinea = 55f;
-
-            float alturaTotal = lineas * alturaLinea + offset;
-
-            content.sizeDelta = new Vector2(content.sizeDelta.x, alturaTotal);
-
-            if (content.sizeDelta.y > scrollView.sizeDelta.y)
-            {
-                Vector3 posicionContent = content.localPosition;
-                posicionContent.y = content.sizeDelta.y - scrollView.sizeDelta.y;
-                content.localPosition = posicionContent;
-            }
-
+            Vector3 posicionContent = content.localPosition;
+            posicionContent.y = content.sizeDelta.y - scrollView.sizeDelta.y;
+            content.localPosition = posicionContent;
         }
     }
 
     private IEnumerator CrControlSpam()
     {
-    Inicio:
+
+    Inicio: //Marcador
         yield return new WaitForSeconds(2);
 
-        if (mensajesEnviados > 0)
-            mensajesEnviados--;
+        if (mensajesEnviados > 0) //Si ha enviado mensajes
+            mensajesEnviados--; //Cada 2s le resta
 
-        goto Inicio;
+        goto Inicio; //Regresar al marcador
 
     }
-    #endregion
+    #endregion SELECCION CHAT
 
-    #region SELECTION - Personajes
+    #region SELECCION - PERSONAJES
 
     public static void SeleccionPersonaje(string nombrePersonaje)
     {
-
+        //Obtenemos las propiedades
         Hashtable propiedades = PhotonNetwork.LocalPlayer.CustomProperties;
 
+        //Guardamos el personaje que escogimos
         propiedades["Personaje"] = nombrePersonaje;
 
+        //Aplicamos los cambios
         PhotonNetwork.LocalPlayer.SetCustomProperties(propiedades);
     }
 
     public static void PersonajeActualizado(Player player)
     {
+        //Obtenemos las propiedades
         Hashtable propiedades = player.CustomProperties;
 
+        //RETURN si no existe la llave
         if (!propiedades.ContainsKey("Personaje")) return;
 
+        //Obtenemos el nombre del personaje que escogio el jugador
         string nombrePersonaje = propiedades["Personaje"].ToString();
 
+        //Guardamos la ruta de donde esta guardado el Prefab
         string ruta = $"Personajes/{nombrePersonaje}/{nombrePersonaje} Image";
 
+        //Obtenemos el Prefab Image
         Image personajeImage = Resources.Load<Image>(ruta);
 
+        //Obtenemos el Slot del player
         SlotJugador slotJugador = dicJugadores[player];
 
+        //Lo mostramos en pantalla
         slotJugador.PersonajeImage = personajeImage;
     }
 
-    #endregion SELECTION - Personajes
+    #endregion SELECCION - PERSONAJES
 
-
+    #endregion CANVAS - SELECCION
 }

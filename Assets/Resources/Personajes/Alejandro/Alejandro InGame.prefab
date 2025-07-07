@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -2294650966060657339}
   - component: {fileID: -2440092618653869854}
   - component: {fileID: 5687425269174293952}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Alejandro InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -130,6 +130,7 @@ MonoBehaviour:
   observableSearch: 2
   ObservedComponents:
   - {fileID: -2440092618653869854}
+  - {fileID: 7173969696082472668}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -242,6 +243,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Alejandro Sprite
       objectReference: {fileID: 0}
+    - target: {fileID: 7378893222521954759, guid: 439a81f2affc8c640865120c0bf2fbb2, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -252,3 +257,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 597982585486836996, guid: 439a81f2affc8c640865120c0bf2fbb2, type: 3}
   m_PrefabInstance: {fileID: 3042539873016913345}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7173969696082472668 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5311514763309298461, guid: 439a81f2affc8c640865120c0bf2fbb2, type: 3}
+  m_PrefabInstance: {fileID: 3042539873016913345}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b8c4a61274f60b4ea5fb4299cfdbf14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

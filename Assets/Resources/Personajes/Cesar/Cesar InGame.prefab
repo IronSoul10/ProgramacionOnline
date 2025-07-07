@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5747622685305453560}
   - component: {fileID: 6031013824350033606}
   - component: {fileID: -6396673774866753683}
-  m_Layer: 6
+  m_Layer: 3
   m_Name: Cesar InGame
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -241,6 +241,10 @@ PrefabInstance:
     - target: {fileID: 2298002560001372336, guid: aa1d94fa84ba7454892c3de2315e646e, type: 3}
       propertyPath: m_Name
       value: Cesar Sprite
+      objectReference: {fileID: 0}
+    - target: {fileID: 2298002560001372336, guid: aa1d94fa84ba7454892c3de2315e646e, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
