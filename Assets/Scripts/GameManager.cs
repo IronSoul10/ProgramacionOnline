@@ -9,12 +9,12 @@ public class GameManager : MonoBehaviour
     private static GameManager self;
     private void Awake()
     {
-        self = this;
+        self = this; 
     }
 
     private void Start()
     {
-        InstanciarJugador();
+        InstanciarJugador(); 
     }
 
     #endregion
@@ -49,8 +49,16 @@ public class GameManager : MonoBehaviour
 
         //Guardamos la referencia de nuestro jugador
         miLJugador = jugador.GetComponent<Jugador>();
+
+        //A nuestro jugador hacemos que lo siga la camara
+        camara.Follow = miLJugador.transform;
     }
 
     #endregion INICIO
 
+    #region JUGADORES
+
+    public static bool bloquearMovimiento = false;
+
+    #endregion JUGADORES
 }
