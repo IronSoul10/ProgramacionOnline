@@ -197,6 +197,46 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[0].Name
+      value: x
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[0].Type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[1].Name
+      value: y
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[1].Type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[2].Name
+      value: caminando
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[2].Type
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[3].Name
+      value: ataqueArma
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[3].Type
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[4].Name
+      value: ataque
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
+      propertyPath: m_SynchronizeParameters.Array.data[4].Type
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -734557989118956112, guid: 805737053f93eca4a851b989480a65c1, type: 3}
       propertyPath: m_SynchronizeParameters.Array.data[0].SynchronizeType
       value: 1
       objectReference: {fileID: 0}

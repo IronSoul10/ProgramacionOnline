@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Random = UnityEngine.Random;
 
 
 public class ControlLobby : MonoBehaviourPunCallbacks
@@ -160,6 +161,13 @@ public class ControlLobby : MonoBehaviourPunCallbacks
         //Indicamos que se esta cargando el mapa
         botonIniciarPartida.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "Cargando Mapa...";
 
+        //Obtenemos cuantos jugadores hay en la sal
+        int numJugadores = PhotonNetwork.CurrentRoom.PlayerCount;
+
+        //Importar la libreriade Random
+        int indiceRandom = Random.Range(0,numJugadores);
+        int i = 0;
+
         //Ciclar todos los jugadores
         foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
         {
@@ -167,6 +175,16 @@ public class ControlLobby : MonoBehaviourPunCallbacks
 
             //Sialguien no ha escogido personaje retornamos
             if (!pp.ContainsKey("Personaje")) return;
+
+            //Si el indice es el indice random
+            if(i == indiceRandom)
+            {
+                //Le crea la propiedad del asesino
+                pp.Add("Asesino", true);
+                player.SetCustomProperties(pp);
+            }
+            //Incrementamos el indice en 1
+            i++;
         }
 
         //Iniciar en las propiedades que ya iniciamos la partida

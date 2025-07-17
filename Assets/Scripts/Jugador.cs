@@ -64,8 +64,23 @@ public class Jugador : MonoBehaviour
     {
         // Mostramos el Nickname del propietario
         nickName.text = Player.NickName;
+
+        //Si contiene la propiedad de Asesino
+        if(Player.CustomProperties.ContainsKey("Asesino"))
+        {
+            _asesino = true;
+
+            //Si somos el Asesino mostramos el texto
+            if (photonView.IsMine) GameManager.MostrarTxtCentral("Tu Eres el Asesino");
+
+        }
     }
     #endregion PHOTON
+
+    #region PROPIEDADES
+    private bool _asesino = false;
+    public bool Asesino => _asesino;
+    #endregion PROPIEDADES
 
     #region MOVIMIENTO
 
