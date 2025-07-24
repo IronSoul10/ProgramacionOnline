@@ -2,6 +2,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using UnityEngine;
+using ExitGames.Client.Photon;
 
 public class Jugador : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class Jugador : MonoBehaviour
     private void Update()
     {
         Update_Imput();
+        Update_Ataque();
     }
 
     private void FixedUpdate()
@@ -34,7 +36,7 @@ public class Jugador : MonoBehaviour
     Rigidbody2D rb;
     BoxCollider2D boxCollider;
     SpriteRenderer sprite;
-    SpriteRenderer Sprite => sprite;
+    public SpriteRenderer Sprite => sprite;
     Animator animator;
     TextMeshProUGUI nickName;
 
@@ -66,7 +68,7 @@ public class Jugador : MonoBehaviour
         nickName.text = Player.NickName;
 
         //Si contiene la propiedad de Asesino
-        if(Player.CustomProperties.ContainsKey("Asesino"))
+        if (Player.CustomProperties.ContainsKey("Asesino"))
         {
             _asesino = true;
 
@@ -80,6 +82,25 @@ public class Jugador : MonoBehaviour
     #region PROPIEDADES
     private bool _asesino = false;
     public bool Asesino => _asesino;
+
+    internal bool Fantasma = false;
+
+    public bool Tangible
+    {
+        get => boxCollider.enabled;
+        set => boxCollider.enabled = value;
+    }
+
+    public float Opacidad
+    {
+        get => sprite.color.a;
+        set
+        {
+            sprite.color = new Color(r: 1, g: 1, b: 1, a: value);
+            nickName.alpha = value;
+        }
+    }
+
     #endregion PROPIEDADES
 
     #region MOVIMIENTO
@@ -112,7 +133,7 @@ public class Jugador : MonoBehaviour
         if (GameManager.bloquearMovimiento) return;
 
         //Hay movimiento
-        if(axis != Vector2.zero)
+        if (axis != Vector2.zero)
         {
             //Guardamos el axis cuando n o es 0
             axisGuardado = axis;
@@ -121,15 +142,15 @@ public class Jugador : MonoBehaviour
             animator.SetBool("caminando", true);
 
             //Movimiento Lateral
-            if(axis.x != 0)
+            if (axis.x != 0)
             {
                 //Animator Blend Tree
-                animator.SetFloat("x",1);
+                animator.SetFloat("x", 1);
                 animator.SetFloat("y", 0);
 
                 //Flip
                 float rotacionY = axis.x > 0 ? 0 : 180;
-                transform.rotation = Quaternion.Euler(new Vector3( 0, rotacionY, 0));
+                transform.rotation = Quaternion.Euler(new Vector3(0, rotacionY, 0));
                 if (nickName != null) nickName.transform.rotation = Quaternion.identity;
             }
 
@@ -153,6 +174,90 @@ public class Jugador : MonoBehaviour
         }
     }
 
-#endregion MOVIMIENTO
+    #endregion MOVIMIENTO
+
+    #region ATAQUE
+
+    private bool bloquearAtaque = false;
+
+    private void Update_Ataque()
+    {
+        //Si no es asesino retorna
+        if (!Asesino) return;
+
+        //Si se presina la tecla K
+        if (Input.GetKeyDown(KeyCode.K)) Atacar();
+    }
+
+    private void Atacar()
+    {
+        // RETURN: Si esta bloqueado el ataque
+        if (bloquearAtaque) return;
+
+        // Ejecuta la animacion
+        animator.SetTrigger(name: "ataque");
+
+        // Obtenemos el offset segun donde este mirando el personaje
+        Vector2 offset = Vector2.zero;
+
+        // La direccion es donde esta viendo el personaje
+        Vector2 direccion = axisGuardado;
+
+        // Mirando arriba o abajo
+        if (axisGuardado.x == 0)
+        {
+            if (axisGuardado.y > 0) // Arriba
+                offset = new Vector2(x: 0, y: boxCollider.size.y + 0.001f);
+            else // Abajo
+                offset = new Vector2(x: 0, y: -0.001f);
+        }
+        // Mirando lateralmente
+        else
+        {
+            offset = new Vector2(x: transform.right.x * (boxCollider.size.x / 2 + 0.001f), boxCollider.offset.y);
+            direccion = (Vector2)transform.right;
+        }
+
+        // Origen de donde se lanza el rayo
+        Vector2 origen = (Vector2)transform.position + offset;
+
+        // Distancia del rayo
+        float distancia = 0.5f;
+
+        // La capa en la que se filtrara el rayo
+        LayerMask capa = LayerMask.GetMask("Jugador");
+
+        // Lanzamos el rayo
+        RaycastHit2D hit = Physics2D.Raycast(origin: origen, direction: direccion, distancia, (int)capa);
+
+        // Si colisiono con otro jugador ...
+        if (hit)
+        {
+            // Obtenemos el componente jugador, desde la colision del rayo
+            PhotonView view = hit.transform.GetComponent<PhotonView>();
+
+            // Obtenemos las propiedades de quien matamos
+            // using ExitGames.Client.Photon;
+            Hashtable propiedades = view.Owner.CustomProperties;
+
+            // Le decimos que va a ser un fantasma
+            propiedades["Fantasma"] = true;
+
+            // Aplicamos los cambios
+            view.Owner.SetCustomProperties(propiedades);
+
+            // Bloqueamos el ataque por 10 segundos
+            bloquearAtaque = true;
+            Invoke(methodName: "DesbloquearAtaque", time: 10);
+        }
+    }
+
+private void DesbloquearAtaque()
+    {
+        bloquearAtaque = false;
+    }
+
+    #endregion ATAQUE
 }
+
 
