@@ -7,6 +7,7 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering;
+using System;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
@@ -46,11 +47,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     #endregion COMPONENTES
 
     #region PHOTON
-
-    // frequently called IDO-1 usage:
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
         fantasmas_jugador_PropiedadesCambiadas(targetPlayer);
+    }
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        Electricidad_Sala_PropiedadesCambiadas(propertiesThatChanged);
     }
 
     #endregion PHOTON
@@ -203,5 +206,43 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     #endregion FANTASMAS
+
+    #region ELECTRICIDAD
+
+    public static Action<bool> OnElectricidadCambiada;
+    private static bool _electricidad = true;
+
+    public static bool Electricidad
+    {
+        get => _electricidad;
+        set
+        {
+            Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+            propiedades["Electricidad"] = value;
+            PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
+        }
+    }
+
+    private void Electricidad_Sala_PropiedadesCambiadas(Hashtable propiedades)
+    {
+        // Si somos un fantasma, no nos afecta el cambio de luz
+        if (miJugador.Fantasma) return;
+
+        // Verifica que la llave exista
+        if (!propiedades.ContainsKey("Electricidad")) return;
+
+        // Obtenemos el valor
+        _electricidad = (bool)propiedades["Electricidad"];
+
+        // Apagamos o encendemos la luz del mapa
+        luzGlobal.intensity = Electricidad ? 1 : 0;
+
+        // Le quitamos el color si se apaga la luz
+        volumenColor.saturation.value = Electricidad ? 0 : -100f;
+
+        // Action
+        OnElectricidadCambiada?.Invoke(Electricidad);
+    }
+    #endregion ELECTRICIDAD
 }
 

@@ -1,8 +1,9 @@
+using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using UnityEngine;
-using ExitGames.Client.Photon;
+using UnityEngine.Rendering.Universal;
 
 public class Jugador : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class Jugador : MonoBehaviour
     private void Awake()
     {
         Awake_ObtenerComponentes();
+        Awake_Electricidad();
     }
 
     private void Start()
@@ -22,6 +24,7 @@ public class Jugador : MonoBehaviour
     {
         Update_Imput();
         Update_Ataque();
+        Update_Triggers();
     }
 
     private void FixedUpdate()
@@ -39,6 +42,7 @@ public class Jugador : MonoBehaviour
     public SpriteRenderer Sprite => sprite;
     Animator animator;
     TextMeshProUGUI nickName;
+    private Light2D luzInterna; // using UnityEngine.Rendering.Universal;
 
     //Photon
     PhotonView photonView;
@@ -52,6 +56,7 @@ public class Jugador : MonoBehaviour
         sprite = transform.GetChild(0).GetComponent<SpriteRenderer>();
         animator = transform.GetChild(0).GetComponent<Animator>();
         nickName = transform.GetComponentInChildren<TextMeshProUGUI>();
+        luzInterna = transform.GetChild(2).GetComponentInChildren<Light2D>();
 
         photonView = GetComponent<PhotonView>();
         photonTransform = GetComponent<PhotonTransformViewClassic>();
@@ -252,12 +257,114 @@ public class Jugador : MonoBehaviour
         }
     }
 
-private void DesbloquearAtaque()
+    private void DesbloquearAtaque()
     {
         bloquearAtaque = false;
     }
 
     #endregion ATAQUE
+
+    #region ALCANTARILLAS
+
+    private Transform alcantarilla;
+
+    private void Usar_Alcantarilla()
+    {
+        // Obtenemos al padre de la alcantarilla
+        Transform padre = alcantarilla.parent;
+
+        // Obtenemos el índice de la alcantarilla contraria
+        int indice = alcantarilla.GetSiblingIndex() == 0 ? 1 : 0;
+
+        // Nos "teleportamos" a la otra alcantarilla
+        transform.position = padre.GetChild(indice).position;
+    }
+    #endregion ALCANTARILLAS
+
+    #region ELECTRICIDAD
+
+    private string electricidadTrigger = string.Empty;
+    private string electricidadActivada = string.Empty;
+
+
+    private void Awake_Electricidad()
+    {
+        luzInterna.gameObject.SetActive(false);
+        GameManager.OnElectricidadCambiada += ElectricidadCambiada;
+    }
+
+    private void ElectricidadCambiada(bool valor)
+    {
+        luzInterna.gameObject.SetActive(!valor);
+    }
+
+
+    private void Usar_Electricidad()
+    {
+        //RETURN: Si esta encendida la luz y no somos el asesino
+        if (GameManager.Electricidad && !Asesino) return;
+
+        //RETURN: Si la luz esta apagada y somos el asesino
+        if (!GameManager.Electricidad && Asesino) return;
+
+        //Primer Activacion
+        if (electricidadActivada == string.Empty)
+        {
+            //Susuda el primer interruptor
+            electricidadActivada = electricidadTrigger;
+        }
+        //Segunda Activacion
+        else
+        {
+            //Verifiecemos que no sea el mismo interruptor
+            if (electricidadTrigger != electricidadActivada)
+            {
+                //Esta seria la segunda activacion para apagar las luces
+                GameManager.Electricidad = !Asesino;
+
+                //Barre el interruptor que ya había activado
+                electricidadActivada = string.Empty;
+            }
+        }
+    }
+
+    #endregion ELECTRICIDAD
+
+    #region TRIGGERS
+
+    private void Update_Triggers()
+    {
+        //RETURN: Si no se esta presionando la tecla E
+        if (!Input.GetKeyDown(KeyCode.E)) return;
+
+        if (alcantarilla)
+            Usar_Alcantarilla();
+        else if (electricidadTrigger != string.Empty)
+            Usar_Electricidad();
+
+    }
+
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        switch (other.gameObject.layer)
+        {
+            case 8: if (Asesino) alcantarilla = other.transform; break;
+            case 9: electricidadTrigger = other.gameObject.name; break;
+        }
+    }
+
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        switch (other.gameObject.layer)
+        {
+            case 8: if (Asesino) alcantarilla = null; break;
+            case 9: electricidadTrigger = string.Empty; break;
+        }
+    }
+
+    #endregion TRIGGERS
 }
 
 
