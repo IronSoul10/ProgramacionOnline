@@ -114,7 +114,7 @@ public class Jugador : MonoBehaviour
     private Vector2 axisGuardado;
     private Vector2 movimiento;
     private float velocidad = 5f;
-    private bool bloquearMovimiento;
+    internal bool bloquearMovimiento;
 
     private void Update_Imput()
     {
@@ -332,6 +332,7 @@ public class Jugador : MonoBehaviour
 
     #region TRIGGERS
 
+    private bool enTriggerVideovigilancia;
     private void Update_Triggers()
     {
         //RETURN: Si no se esta presionando la tecla E
@@ -341,6 +342,9 @@ public class Jugador : MonoBehaviour
             Usar_Alcantarilla();
         else if (electricidadTrigger != string.Empty)
             Usar_Electricidad();
+        else if (enTriggerVideovigilancia)
+            GameManager.Videovigilancia = !GameManager.Videovigilancia;
+
 
     }
 
@@ -351,6 +355,9 @@ public class Jugador : MonoBehaviour
         {
             case 8: if (Asesino) alcantarilla = other.transform; break;
             case 9: electricidadTrigger = other.gameObject.name; break;
+            default:
+                if (other.CompareTag("Videovigilancia")) enTriggerVideovigilancia = true; break;
+
         }
     }
 
@@ -361,6 +368,8 @@ public class Jugador : MonoBehaviour
         {
             case 8: if (Asesino) alcantarilla = null; break;
             case 9: electricidadTrigger = string.Empty; break;
+            default:
+                if (other.CompareTag("Videovigilancia")) enTriggerVideovigilancia = false; break;
         }
     }
 

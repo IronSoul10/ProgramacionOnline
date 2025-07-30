@@ -1,13 +1,13 @@
-using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
+using System.Collections.Generic;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering;
-using System;
+using UnityEngine.Rendering.Universal;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
@@ -67,7 +67,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [Header("Inicio")]
     [SerializeField] private Transform spawnPoints;
 
-    private Jugador miJugador;
+    public static Jugador miJugador;
 
     private void InstanciarJugador()
     {
@@ -244,5 +244,27 @@ public class GameManager : MonoBehaviourPunCallbacks
         OnElectricidadCambiada?.Invoke(Electricidad);
     }
     #endregion ELECTRICIDAD
+
+    #region VIDEOVIGILANCIA
+
+    [SerializeField] private GameObject ventanaVideovigilancia;
+    [SerializeField] private GameObject videocamaras;
+
+    private static bool _videovigilancia = false;
+
+    public static bool Videovigilancia
+
+    {
+        get => _videovigilancia;
+        set
+        {
+            _videovigilancia = value;
+            self.ventanaVideovigilancia.SetActive(value);
+            self.videocamaras.SetActive(value);
+            miJugador.bloquearMovimiento = value;
+        }
+    }
+
+    #endregion VIDEOVIGILANCIA
 }
 
