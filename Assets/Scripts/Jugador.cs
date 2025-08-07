@@ -342,6 +342,8 @@ public class Jugador : MonoBehaviour
             Usar_Alcantarilla();
         else if (electricidadTrigger != string.Empty)
             Usar_Electricidad();
+        else if (enTriggerVotacion)
+            IniciarVotacion();
         else if (enTriggerVideovigilancia)
             GameManager.Videovigilancia = !GameManager.Videovigilancia;
 
@@ -355,6 +357,7 @@ public class Jugador : MonoBehaviour
         {
             case 8: if (Asesino) alcantarilla = other.transform; break;
             case 9: electricidadTrigger = other.gameObject.name; break;
+            case 10: enTriggerVotacion = true; break;
             default:
                 if (other.CompareTag("Videovigilancia")) enTriggerVideovigilancia = true; break;
 
@@ -368,12 +371,24 @@ public class Jugador : MonoBehaviour
         {
             case 8: if (Asesino) alcantarilla = null; break;
             case 9: electricidadTrigger = string.Empty; break;
+            case 10: enTriggerVotacion = false; break;
             default:
                 if (other.CompareTag("Videovigilancia")) enTriggerVideovigilancia = false; break;
         }
     }
 
     #endregion TRIGGERS
+
+    #region VOTACION
+
+    private bool enTriggerVotacion = false;
+
+    private void IniciarVotacion()
+    {
+        GameManager.IniciarVotacion();
+    }
+
+    #endregion VOTACION
 }
 
 

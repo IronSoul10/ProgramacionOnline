@@ -1,13 +1,16 @@
-using ExitGames.Client.Photon;
+using Microsoft.Unity.VisualStudio.Editor;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.UI;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
@@ -21,6 +24,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         Awake_ObtenerComponents();
         InstanciarJugador();
         Awake_Jugadores();
+        Awake_Votacion();
     }
 
     private void Start()
@@ -54,6 +58,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
         Electricidad_Sala_PropiedadesCambiadas(propertiesThatChanged);
+        Votacion_Sala_PropiedadesCambiadas(propertiesThatChanged);
     }
 
     #endregion PHOTON
@@ -266,5 +271,162 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     #endregion VIDEOVIGILANCIA
-}
 
+    #region VOTACION
+
+    [Header("Votacion")]
+    [SerializeField] private GameObject ventanaVotacion;
+    [SerializeField] private Transform panelVotos;
+    [SerializeField] private TMP_Text txtCuentaRegresiva;
+    [SerializeField] private Voto pfVoto;
+
+    private Dictionary<Player, Voto> dicVotos = new Dictionary<Player, Voto>();
+    private static bool bloquearVoto = false;
+
+    //Por quien votamos
+    private static Player mivoto = null;
+
+    private void Awake_Votacion()
+    {
+        //Por si dejamos la ventana abierta en el editor
+        ventanaVotacion.SetActive(false);
+    }
+
+    public static void IniciarVotacion()
+    {
+        //Acreamos la propiedade de VotacionIniciada
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+        propiedades["VotacionIniciada"] = true;
+        if (propiedades.ContainsKey("MasVotado")) propiedades.Remove(key: "MasVotado");
+        PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
+
+        //Inicializar en "cero" los propiedades de la votación
+        foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
+        {
+            //Reseteamos los votos a 0
+            Hashtable pp = player.CustomProperties;
+            pp["Votos"] = 0;
+            player.SetCustomProperties(pp);
+        }
+        //Iniciamos la cuenta regresiva
+        self.StartCoroutine(routine: CrCuentaRegresiva());
+    }
+
+    public static void Votar(Voto voto)
+    {
+
+    }
+
+    //Para usar corrutinas, importar: using System.Collections;
+    public static IEnumerator CrCuentaRegresiva()
+    {
+        //Tiempo inicial
+        int t = 21;
+
+    //Marcador
+    RestarSegundo:
+
+        t--; //Restamos 1 al tiempo
+
+        //Lo aplicamos a las propiedades de la sala
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
+        propiedades["CuentaRegresiva"] = t;
+        PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
+
+        //Esperamos 1 segundo
+        yield return new WaitForSeconds(1f);
+
+        //Si el tiempo aun no acaba, regresara el marcador
+        if (t > 0) goto RestarSegundo;
+
+        //Cuando termina la cuenta regresiva
+        CuentaRegresivaFinalizada();
+    }
+    public static void CuentaRegresivaFinalizada()
+    {
+
+    }
+    private void Votacion_Sala_PropiedadesCambiadas(Hashtable propiedades)
+    {
+        //- VOTACION INICIADA
+        if (propiedades.ContainsKey("VotacionIniciada"))
+        {
+            //Obtenemos el value de la Key
+            bool votacionIniciada = (bool)propiedades["VotacionIniciada"];
+
+            //Abrimos la ventana de votacion
+            VentanaVotacionAbierta = votacionIniciada;
+
+            //Bloqueamos el movimiento de todos los jugadores
+            if (votacionIniciada) bloquearMovimiento = true;
+        }
+
+        //- CUENTA REGRESIVA
+        if (propiedades.ContainsKey("CuentaRegresiva"))
+        {
+            //Obtenemos el tiempo en segundos
+            int t = (int)propiedades["CuentaRegresiva"];
+
+            //Convertimos el tiempo al formato de cuenta regresiva
+            TimeSpan timeSpan = TimeSpan.FromSeconds(t);
+            txtCuentaRegresiva.text = timeSpan.ToString(format: @"mm\:ss");
+        }
+    }
+
+    private bool VentanaVotacionAbierta
+    {
+        set
+        {
+            //RETURN: Si no hay cambios en el valor
+            if (ventanaVotacion.activeSelf == value) return;
+
+            //Encencer o Apagar la Ventana
+            ventanaVotacion.SetActive(value);
+
+            //Si se abrio la ventana
+            if (value)
+            {
+                //Eliminamos todos los Slots que haya en el Panel Votos
+                for (int i = 0; i < panelVotos.childCount; i++)
+                    Destroy(panelVotos.GetChild(i).gameObject);
+
+                //Creamos un nuevo diccionario
+                dicVotos = new Dictionary<Player, Voto>();
+
+                //Ciclamos todos los jugadores de la sala
+                foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
+                {
+                    //Instanciamos un voto
+                    Voto voto = Instantiate(pfVoto, panelVotos);
+
+                    //Le pasamos su Player
+                    voto.Player = player;
+
+                    //Agregamos el par al diccionario
+                    dicVotos.Add(player, voto);
+
+                    //Los que sean fantasmas, deshabilitamos su boton.
+                    //O si nosotros somos un fantasma, deshabilitamos todos los botones (Votos)
+                    if (player.CustomProperties.ContainsKey("Fantasma") || miJugador.Fantasma)
+                        voto.Habilitado = false;
+                }
+            }
+        }
+    }
+
+
+    // En el método ImagePersonaje, especifica el namespace completo para Image:
+    public static UnityEngine.UI.Image ImagePersonaje(Player pLayer)
+    {
+        //Obtenemos el nombre del personaje que escogio el jugador
+        string nombrePersonaje = pLayer.CustomProperties["Personaje"].ToString();
+
+        //Obtenemos la ruta donde esta guardado el Personaje Image
+        string ruta = $"Personajes/{nombrePersonaje}/{nombrePersonaje} Image";
+
+        //Retornamos el Prefab Image
+        return Resources.Load<UnityEngine.UI.Image>(ruta);
+    }
+
+    #endregion RECUROS
+}
