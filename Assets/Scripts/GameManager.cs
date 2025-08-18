@@ -1,4 +1,4 @@
-using Microsoft.Unity.VisualStudio.Editor;
+using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
@@ -9,6 +9,7 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.UI;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameManager : MonoBehaviourPunCallbacks
@@ -20,7 +21,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     private void Awake()
     {
         self = this;
-        Awake_ObtenerComponents();
+        Awake_ObtenerComponentes();
         InstanciarJugador();
         Awake_Jugadores();
         Awake_Votacion();
@@ -35,12 +36,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     #region COMPONENTES
 
-    private Light2D luzGlobal; // using UnityEngine.Rendering.Universal;
-    private Volume volumen;   // using UnityEngine.Rendering;
+    private Light2D luzGlobal;
+    private Volume volumen;
     private ColorAdjustments volumenColor;
 
-    // Usage
-    private void Awake_ObtenerComponents()
+    private void Awake_ObtenerComponentes()
     {
         luzGlobal = GetComponent<Light2D>();
         volumen = GetComponent<Volume>();
@@ -49,12 +49,15 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     #endregion COMPONENTES
 
+
     #region PHOTON
+
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
-        fantasmas_jugador_PropiedadesCambiadas(targetPlayer);
+        Fantasmas_Jugador_PropiedadesCambiadas(targetPlayer);
         Votacion_Jugador_PropiedadesCambiadas(targetPlayer);
     }
+
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
         Electricidad_Sala_PropiedadesCambiadas(propertiesThatChanged);
@@ -62,91 +65,63 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     #endregion PHOTON
-
-    #region CAMARA
-    [Header("Camara")]
+    #region camara
+    [Header("camara")]
     [SerializeField] private CinemachineCamera camara;
-    #endregion CAMARA
+    #endregion
 
     #region INICIO
     [Header("Inicio")]
     [SerializeField] private Transform spawnPoints;
 
-    public static Jugador miJugador;
+    private static Jugador miJugador;
 
     private void InstanciarJugador()
     {
-        // Obtenemos el nombre del personaje que escogimos
         string nombrePersonaje = PhotonNetwork.LocalPlayer.CustomProperties["Personaje"].ToString();
 
-        // Obtenemos la ruta donde esta guardado el Personaje InGame
         string ruta = $"Personajes/{nombrePersonaje}/{nombrePersonaje} InGame";
 
-        // Obtenemos el spawnPoint
         int indice = PhotonNetwork.LocalPlayer.ActorNumber - 1;
         Vector3 spawnPoint = spawnPoints.GetChild(indice).position;
 
-        // Instanciamos a nuestro Personaje
         GameObject jugador = PhotonNetwork.Instantiate(ruta, spawnPoint, Quaternion.identity);
 
-        // Guardamos la referencia de nuestro jugador
         miJugador = jugador.GetComponent<Jugador>();
 
-        // A nuestro jugador hacemos que lo siga la camara
         camara.Follow = miJugador.transform;
     }
+
     #endregion INICIO
 
-    #region CANVAS
-    [Header("Canvas")]
-    [SerializeField] private TMP_Text txtCentral;
-
-    public static void MostrarTxtCentral(string texto)
-    {
-        self.txtCentral.text = texto;
-        self.txtCentral.gameObject.SetActive(true);
-        self.Invoke("OcultarTextoCentral", 2f);
-    }
-
-    private void OcultarTextoCentral()
-    {
-        txtCentral.gameObject.SetActive(false);
-    }
-    #endregion CANVAS
+    #region Jugadores
 
     #region JUGADORES
     private Dictionary<Player, Jugador> dicJugadores = new Dictionary<Player, Jugador>();
     private List<Player> jugadoresVivos = new List<Player>();
-    public static Player asesinoPlayer;
+    private static Player asesinoPlayer;
     public static bool bloquearMovimiento = false;
 
     private void Awake_Jugadores()
     {
-        // Ciclamos todos los jugadores
         foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
         {
-            //Guardar quien es el asesino
             if (player.CustomProperties.ContainsKey("Asesino")) asesinoPlayer = player;
-            //Si no es el asesino
             else jugadoresVivos.Add(player);
         }
     }
 
     private void Start_Jugadores()
     {
-        //Damos un Delay de 1s para que de tiempo a Photon instanciar a todos los jugadores
         Invoke("BuscarJugadores", 1);
     }
 
     private void BuscarJugadores()
     {
-        //Obtenemos a todos los Jugadores
         var busqueda = GameObject.FindGameObjectsWithTag("Player");
 
-        //Los agregamos al diccionario
         foreach (GameObject go in busqueda)
         {
-            //Agregamos el par al diccionario
             Jugador jugador = go.GetComponent<Jugador>();
             dicJugadores.Add(jugador.Player, jugador);
         }
@@ -154,62 +129,70 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private void JugadorAsesinado(Player player)
     {
-        //Removemos al player asesinado
-        jugadoresVivos.Remove(asesinoPlayer);
+        jugadoresVivos.Remove(player);
     }
-
     #endregion JUGADORES
 
-    #region FANTASMAS
 
-    public void fantasmas_jugador_PropiedadesCambiadas(Player player)
+    #endregion
+
+    #region Canvas
+    [Header("Canvas")]
+    [SerializeField] private TMP_Text txtCentral;
+
+    public static void MostrarTxtCentral(string texto)
     {
-        //RETURN: Si no está guardado el jugador en el diccionario
+        self.txtCentral.text = texto;
+        self.txtCentral.gameObject.SetActive(true);
+        self.Invoke(methodName: "OcultarTextoCentral", time: 2f);
+    }
+
+    private void OcultarTextoCentral()
+    {
+        txtCentral.gameObject.SetActive(false);
+    }
+    #endregion Canvas
+
+    #region FANTASMAS
+    public void Fantasmas_Jugador_PropiedadesCambiadas(Player player)
+    {
         if (!dicJugadores.ContainsKey(player)) return;
 
-        //Obtenemos al jugador del cual cambiaron sus propiedades
         Jugador jugador = dicJugadores[player];
 
-        //Obtenemos si es un fantasma el Personaje que controlamos
         bool soyFantasma = PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey("Fantasma");
 
-        //- Si se convirtió en un fantasma
+
         if (player.CustomProperties.ContainsKey("Fantasma"))
         {
-            //Propiedades del jugador
+
             jugador.Fantasma = true;
 
-            //Este vivo o muerto, no me puede atravesar un fantasma
             jugador.Tangible = false;
 
-            //Si soy un fantasma, puedo ver a los otros fantasmas. Si estoy vivo no veo fantasmas
             jugador.Opacidad = soyFantasma ? 0.25f : 0;
 
-            //Instanciamos solo el Hijo que es el Sprite
+
             SpriteRenderer cadaver = Instantiate(jugador.Sprite, jugador.transform.position, Quaternion.identity);
             cadaver.color = Color.grey;
             cadaver.transform.rotation = Quaternion.Euler(x: 0, y: 0, z: 90);
 
-            //Removemos los componentes que no son necesarios al cadaver
-            Destroy(cadaver.gameObject.GetComponent<PhotonAnimatorView>());
-            Destroy(cadaver.gameObject.GetComponent<Animator>());
 
-            //Si yo me convertí en fantasma ...
-            if (player == PhotonNetwork.LocalPlayer)
-            {
-                //PD: Si me volví fantasma, ya no puedo iniciar votación
-
-                //Cuando estaba vivo no veía fantasmas
-                //Pero si me convertí en fantasma ahora los debo de ver
-                foreach (Jugador j in dicJugadores.Values)
-                    if (j.Fantasma) j.Opacidad = 0.25f;
-            }
-
-            //Al final lo removemos de la lista y revisamos si aún quedan vivos
-            JugadorAsesinado(player);
+            Destroy(obj: cadaver.gameObject.GetComponent<PhotonAnimatorView>());
+            Destroy(obj: cadaver.gameObject.GetComponent<Animator>());
         }
-    }
 
+
+        if (player == PhotonNetwork.LocalPlayer)
+        {
+
+            foreach (Jugador j in dicJugadores.Values)
+                if (j.Fantasma) j.Opacidad = 0.25f;
+        }
+
+
+        JugadorAsesinado(player);
+    }
     #endregion FANTASMAS
 
     #region ELECTRICIDAD
@@ -227,26 +210,20 @@ public class GameManager : MonoBehaviourPunCallbacks
             PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
         }
     }
-
     private void Electricidad_Sala_PropiedadesCambiadas(Hashtable propiedades)
     {
-        // Si somos un fantasma, no nos afecta el cambio de luz
         if (miJugador.Fantasma) return;
 
-        // Verifica que la llave exista
         if (!propiedades.ContainsKey("Electricidad")) return;
 
-        // Obtenemos el valor
         _electricidad = (bool)propiedades["Electricidad"];
 
-        // Apagamos o encendemos la luz del mapa
         luzGlobal.intensity = Electricidad ? 1 : 0;
 
-        // Le quitamos el color si se apaga la luz
         volumenColor.saturation.value = Electricidad ? 0 : -100f;
 
-        // Action
         OnElectricidadCambiada?.Invoke(Electricidad);
+
     }
     #endregion ELECTRICIDAD
 
@@ -258,9 +235,9 @@ public class GameManager : MonoBehaviourPunCallbacks
     private static bool _videovigilancia = false;
 
     public static bool Videovigilancia
-
     {
         get => _videovigilancia;
+
         set
         {
             _videovigilancia = value;
@@ -270,10 +247,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+
     #endregion VIDEOVIGILANCIA
 
-    #region VOTACION
 
+    #region VOTACION
     [Header("Votacion")]
     [SerializeField] private GameObject ventanaVotacion;
     [SerializeField] private Transform panelVotos;
@@ -281,142 +259,71 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] private Voto pfVoto;
 
     private Dictionary<Player, Voto> dicVotos = new Dictionary<Player, Voto>();
+
     private static bool bloquearVoto = false;
 
-    //Por quien votamos
     private static Player miVoto = null;
 
     private void Awake_Votacion()
     {
-        //Por si dejamos la ventana abierta en el editor
         ventanaVotacion.SetActive(false);
     }
 
     public static void IniciarVotacion()
     {
-        //Acreamos la propiedade de VotacionIniciada
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
         propiedades["VotacionIniciada"] = true;
-        if (propiedades.ContainsKey("MasVotado")) propiedades.Remove(key: "MasVotado");
+
+        if (propiedades.ContainsKey("MasVotado")) propiedades.Remove("MasVotado");
+
+
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
 
-        //Inicializar en "cero" los propiedades de la votación
         foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
         {
-            //Reseteamos los votos a 0
             Hashtable pp = player.CustomProperties;
+            pp["Votantes"] = string.Empty;
             pp["Votos"] = 0;
             player.SetCustomProperties(pp);
         }
-        //Iniciamos la cuenta regresiva
-        self.StartCoroutine(routine: CrCuentaRegresiva());
-    }
 
-    private void Votacion_Jugador_PropiedadesCambiadas(Player player)
-    {
-        //print("Voto por " + player.NickName);
-
-        //Obtenemos las propieades del Player
-        Hashtable propieades = player.CustomProperties;
-
-        //Si no contiene la llave de votantes
-        if (!propieades.ContainsKey("Votantes")) return;
-
-        //Obtenemos los votantes en string
-        string votantes = propieades["Votantes"].ToString();
-
-        //Le envamos la lista de votantes
-        dicVotos[player].Votantes = StringToList(votantes);
-    }
-
-    public static string ListToString(List<Player> listaPlayers)
-    {
-        string cadena = "";
-
-        //Concatenamos a la cadena el Player mas un guion para separarlos
-        foreach (Player player in listaPlayers)
-            cadena += $"{player.ActorNumber}-";
-
-        //Regresamos la cadena con todos los ids de los players
-        return cadena;
-    }
-
-    public static List<Player> StringToList(string cadena)
-    {
-        //Convertimos la cadena a una lista de strings con los Ids
-        List<string> listaIds = new List<string>(cadena.Split('-'));
-
-        //Creamos una lista de Players
-        List<Player> listaPlayers = new List<Player>();
-
-        foreach (string idString in listaIds)
-        {
-            //CONTINUE: Si el id esta vacio
-            if (idString == string.Empty) continue;
-
-            //Convertir la cadena a un entero
-            int id = Convert.ToInt32(idString);
-
-            //Obtener al Player por su id (Actor Number)
-            Player player = PhotonNetwork.CurrentRoom.GetPlayer(id);
-
-            //Lo agregamos a la lista
-            listaPlayers.Add(player);
-        }
-
-        //Retornamos la lista de los votantes
-        return listaPlayers;
+        self.StartCoroutine(CrCuentaRegresiva());
     }
 
     public static void Votar(Voto voto)
     {
-        //RETURN: Si esta bloqueado el voto
         if (bloquearVoto) return;
 
-        //Bloqueamos el voto por 1 segundo
         bloquearVoto = true;
-        self.Invoke(methodName: "DesbloquearVoto", time: 0.5f);
+        self.Invoke(nameof(DesbloquearVoto), time: 0.5f);
 
-        //Obtenemos las propiedades por quien votamos
-        Hashtable propieades = voto.Player.CustomProperties;
+        Hashtable propiedades = voto.Player.CustomProperties;
 
-        //Obtenemos la lista de votantes
-        List<Player> votantes = StringToList(propieades["Votantes"].ToString());
+        List<Player> votantes = StringToList(propiedades["Votantes"].ToString());
 
-        //Nos agregamos a su lista de votantes
         votantes.Add(PhotonNetwork.LocalPlayer);
 
-        //Volvemos a convertir la lista a una cadena para poder enviarla a Photon
-        propieades["Votantes"] = ListToString(votantes);
+        propiedades["Votantes"] = ListToString(votantes);
 
-        //Aumentamos en 1 el numero de votos
-        propieades["Votos"] = (int)propieades["Votos"] + 1;
+        propiedades["Votos"] = (int)propiedades["Votos"] + 1;
 
-        //Aplicamos los cambios de por quien votamos
-        voto.Player.SetCustomProperties(propieades);
+        voto.Player.SetCustomProperties(propiedades);
 
-        //Si ya habia votado por alguien
         if (miVoto != null)
         {
-            //Obtenemos las propiedades de por quien habamos votado anteriormente
             Hashtable p = miVoto.CustomProperties;
 
-            //Obtenemos la lista de votantes, por quien habia votado antes
             votantes = StringToList(p["Votantes"].ToString());
 
-            //Nos removemos de la lista
             votantes.Remove(PhotonNetwork.LocalPlayer);
 
-            //Le pasamos la lista modificada, donde nos removimos
             p["Votantes"] = ListToString(votantes);
 
             p["Votos"] = (int)p["Votos"] - 1;
 
-            //Actualizamos los cambios
             miVoto.SetCustomProperties(p);
         }
 
-        //Guardamos por quien votamos
         miVoto = voto.Player;
     }
 
@@ -425,104 +332,96 @@ public class GameManager : MonoBehaviourPunCallbacks
         bloquearVoto = false;
     }
 
-    //Para usar corrutinas, importar: using System.Collections;
     public static IEnumerator CrCuentaRegresiva()
     {
-        //Tiempo inicial
         int t = 21;
 
-    //Marcador
     RestarSegundo:
 
-        t--; //Restamos 1 al tiempo
-
-        //Lo aplicamos a las propiedades de la sala
+        t--;
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
         propiedades["CuentaRegresiva"] = t;
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
 
-        //Esperamos 1 segundo
         yield return new WaitForSeconds(1f);
 
-        //Si el tiempo aun no acaba, regresara el marcador
         if (t > 0) goto RestarSegundo;
 
-        //Cuando termina la cuenta regresiva
         CuentaRegresivaFinalizada();
     }
+
     private static void CuentaRegresivaFinalizada()
     {
+
         Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
-        //- Cuando el Timer llego a 0
         int mayor = -1;
         Player masVotado = null;
         bool empate = false;
 
-        //Revisar los votos
         foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
         {
-            //Obtenemos cuantos votos tiene ese Jugador
             int votos = (int)player.CustomProperties["Votos"];
 
-            //Si es mayor, reemplazamos el mayor
             if (votos > mayor)
             {
                 mayor = votos;
                 masVotado = player;
                 empate = false;
             }
-            //Si hay votos iguales
             else if (votos == mayor)
             {
                 empate = true;
             }
         }
 
-        //Cerramos la votacion (Va a cerrar la ventana de votacion)
         propiedades["VotacionIniciada"] = false;
 
-        //Eliminar la Llave de Cuenta regresiva
         propiedades.Remove("CuentaRegresiva");
 
-        //Si hubo empate, guardamos -1 y si no, enviamos quien fue el mas votado
         propiedades["MasVotado"] = empate ? -1 : masVotado.ActorNumber;
 
-        //Aplicamos los cambios
         PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
     }
+
     private void Votacion_Sala_PropiedadesCambiadas(Hashtable propiedades)
     {
-        // CUENTA REGRESIVA
+
+        if (propiedades.ContainsKey("VotacionIniciada"))
+        {
+            bool votacionIniciada = (bool)propiedades["VotacionIniciada"];
+
+            VentanaVotacionAbierta = votacionIniciada;
+
+            if (votacionIniciada) bloquearMovimiento = true;
+        }
+
         if (propiedades.ContainsKey("CuentaRegresiva"))
         {
-            // Obtenemos el tiempo en segundos
             int t = (int)propiedades["CuentaRegresiva"];
 
-            // Convertimos el tiempo al formato de cuenta regresiva
             TimeSpan timeSpan = TimeSpan.FromSeconds(t);
             txtCuentaRegresiva.text = timeSpan.ToString(@"mm\:ss");
         }
 
-        // CUENTA REGRESIVA FINALIZADA
         if (propiedades.ContainsKey("MasVotado"))
         {
-            // Obtenemos el valor
+            //Obtenemos el valor
             int actorNumber = (int)propiedades["MasVotado"];
 
-            // Empate
+            //Empate
             if (actorNumber == -1)
             {
-                // Vamos a mostrar el texto de empate
-                MostrarTxtCentral("Empate de Votacion");
+                //Vamos a mostrar el texto de empate
+                MostrarTxtCentral(texto: "Empate de Votacion");
 
-                // Desbloquear el movimiento de los jugadores
+                //Desbloquear el movimiento de los jugadores
                 bloquearMovimiento = false;
             }
             else
             {
-                // Expulsamos al jugador
-                StartCoroutine(CrExpulsar(actorNumber));
+                //Expulsamos al jugador
+                StartCoroutine(routine: CrExpulsar(actorNumber));
             }
         }
     }
@@ -531,110 +430,117 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         set
         {
-            //RETURN: Si no hay cambios en el valor
             if (ventanaVotacion.activeSelf == value) return;
 
-            //Encencer o Apagar la Ventana
             ventanaVotacion.SetActive(value);
 
-            //Si se abrio la ventana
             if (value)
             {
-                //Eliminamos todos los Slots que haya en el Panel Votos
                 for (int i = 0; i < panelVotos.childCount; i++)
                     Destroy(panelVotos.GetChild(i).gameObject);
 
-                //Creamos un nuevo diccionario
                 dicVotos = new Dictionary<Player, Voto>();
 
-                //Ciclamos todos los jugadores de la sala
                 foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
                 {
-                    //Instanciamos un voto
                     Voto voto = Instantiate(pfVoto, panelVotos);
+                    voto.gameObject.SetActive(true);
 
-                    //Le pasamos su Player
                     voto.Player = player;
 
-                    //Agregamos el par al diccionario
                     dicVotos.Add(player, voto);
 
-                    //Los que sean fantasmas, deshabilitamos su boton.
-                    //O si nosotros somos un fantasma, deshabilitamos todos los botones (Votos)
+
                     if (player.CustomProperties.ContainsKey("Fantasma") || miJugador.Fantasma)
                         voto.Habilitado = false;
                 }
             }
         }
+
     }
 
-    // En el método ImagePersonaje, especifica el namespace completo para Image:
-    public static UnityEngine.UI.Image ImagePersonaje(Player pLayer)
+    public static string ListToString(List<Player> listaPlayers)
     {
-        //Obtenemos el nombre del personaje que escogio el jugador
-        string nombrePersonaje = pLayer.CustomProperties["Personaje"].ToString();
+        string cadena = "";
 
-        //Obtenemos la ruta donde esta guardado el Personaje Image
-        string ruta = $"Personajes/{nombrePersonaje}/{nombrePersonaje} Image";
+        foreach (Player player in listaPlayers)
+            cadena += $"{player.ActorNumber}-";
 
-        //Retornamos el Prefab Image
-        return Resources.Load<UnityEngine.UI.Image>(ruta);
+        return cadena;
     }
 
-    #endregion RECUROS
+    public static List<Player> StringToList(string cadena)
+    {
+        List<string> listaIds = new List<string>(cadena.Split('-'));
 
-    #region EXPULSOR
-    [Header("EXPULSOR")]
+        List<Player> listaPlayers = new List<Player>();
+
+        foreach (string idString in listaIds)
+        {
+            if (idString == string.Empty) continue;
+
+            int id = Convert.ToInt32(idString);
+
+            Player player = PhotonNetwork.CurrentRoom.GetPlayer(id);
+
+            listaPlayers.Add(player);
+        }
+
+        return listaPlayers;
+    }
+    private void Votacion_Jugador_PropiedadesCambiadas(Player player)
+    {
+
+        Hashtable propiedades = player.CustomProperties;
+
+        if (!propiedades.ContainsKey("Votantes")) return;
+
+        string votantes = propiedades["Votantes"].ToString();
+
+        dicVotos[player].Votantes = StringToList(votantes);
+    }
+
+    #endregion VOTACION
+
+    #region Expulsor
+
+    [Header("Expulsor")]
     [SerializeField] private Animator expulsor;
     [SerializeField] private Transform emptyPersonaje;
 
     public IEnumerator CrExpulsar(int actorNumber)
     {
-        // Obtenemos el Player segun su actorNumber
         Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
 
-        // Obtenemos la referencia del player
         Jugador jugador = dicJugadores[player];
 
-        // Si no era el asesino
-        string txt = jugador.Asesino ? $" {player.NickName} era el Asesino " : $" {player.NickName} no era el Asesino";
+        string txt = jugador.Asesino ? $"{player.NickName} era el Asesino" : $"{player.NickName} no era el Asesino";
         MostrarTxtCentral(txt);
 
-        // Lo hacemos hijo de Empty Personaje y deshabilitamos su Photon Transform
-        jugador.PhotonTransform.enabled = false; // Para evitar sincronizar el movimiento
-        jugador.transform.SetParent(emptyPersonaje); // Lo hacemos hijo para que siga el movimiento de la animacion
+        jugador.PhotonTransform.enabled = false;
+        jugador.transform.SetParent(emptyPersonaje);
         jugador.transform.position = emptyPersonaje.position;
 
-        // Activamos el expulsor
         expulsor.gameObject.SetActive(true);
         expulsor.SetTrigger("expulsar");
 
-        // Esperamos los 4 segundos que dura la animacion + 1s
         yield return new WaitForSeconds(5);
 
-        // Si se expulso al Asesino
         if (jugador.Asesino)
         {
-            // Gana la tripulacion
             yield break;
         }
 
-        // Desactivamos el expulsor (Donde esta la camara)
         expulsor.gameObject.SetActive(false);
 
-        // Lo mandamos a la raiz de la jerarquia
         jugador.transform.SetParent(null);
 
-        // Colocamos al jugador expulsado en el origen
         jugador.transform.position = Vector3.zero;
 
-        // Regresamos el personaje a su tamaño original
         jugador.transform.localScale = Vector3.one;
 
-        // Volvemos a habilitar su Transform View
         jugador.PhotonTransform.enabled = true;
 
-        // Los volvemos fantasma
         if (miJugador.Player.ActorNumber == player.ActorNumber)
         {
             Hashtable propiedadesJugador = player.CustomProperties;
@@ -642,8 +548,22 @@ public class GameManager : MonoBehaviourPunCallbacks
             player.SetCustomProperties(propiedadesJugador);
         }
 
-        // Desbloqueamos el movimiento
         bloquearMovimiento = false;
     }
-    #endregion EXPULSOR
+    #endregion
+
+
+    #region RECUROS
+
+    public static Image ImagePersonaje(Player player)
+    {
+        string nombrePersonaje = player.CustomProperties["Personaje"].ToString();
+
+        string ruta = $"Personajes/{nombrePersonaje}/{nombrePersonaje} Image";
+
+        return Resources.Load<Image>(ruta);
+    }
+
+    #endregion RECUROS
+
 }
