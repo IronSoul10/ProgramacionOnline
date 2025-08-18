@@ -15416,6 +15416,8 @@ MonoBehaviour:
   panelVotos: {fileID: 246852957}
   txtCuentaRegresiva: {fileID: 1409113463}
   pfVoto: {fileID: 3992236147936311784, guid: 92a468b961d21264399d97970bf8fe9d, type: 3}
+  expulsor: {fileID: 6621099830408137453}
+  emptyPersonaje: {fileID: 7842060297968314494}
 --- !u!114 &8481864475062717446
 MonoBehaviour:
   m_ObjectHideFlags: 0

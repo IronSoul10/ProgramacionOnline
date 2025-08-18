@@ -47,7 +47,7 @@ public class Jugador : MonoBehaviour
     //Photon
     PhotonView photonView;
     PhotonTransformViewClassic photonTransform;
-    PhotonTransformViewClassic PhotonTransform => photonTransform;
+    public PhotonTransformViewClassic PhotonTransform => photonTransform;
 
     private void Awake_ObtenerComponentes()
     {

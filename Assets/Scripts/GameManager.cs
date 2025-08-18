@@ -9,7 +9,6 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.UI;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameManager : MonoBehaviourPunCallbacks
@@ -54,6 +53,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
         fantasmas_jugador_PropiedadesCambiadas(targetPlayer);
+        Votacion_Jugador_PropiedadesCambiadas(targetPlayer);
     }
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
@@ -284,7 +284,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     private static bool bloquearVoto = false;
 
     //Por quien votamos
-    private static Player mivoto = null;
+    private static Player miVoto = null;
 
     private void Awake_Votacion()
     {
@@ -312,9 +312,117 @@ public class GameManager : MonoBehaviourPunCallbacks
         self.StartCoroutine(routine: CrCuentaRegresiva());
     }
 
+    private void Votacion_Jugador_PropiedadesCambiadas(Player player)
+    {
+        //print("Voto por " + player.NickName);
+
+        //Obtenemos las propieades del Player
+        Hashtable propieades = player.CustomProperties;
+
+        //Si no contiene la llave de votantes
+        if (!propieades.ContainsKey("Votantes")) return;
+
+        //Obtenemos los votantes en string
+        string votantes = propieades["Votantes"].ToString();
+
+        //Le envamos la lista de votantes
+        dicVotos[player].Votantes = StringToList(votantes);
+    }
+
+    public static string ListToString(List<Player> listaPlayers)
+    {
+        string cadena = "";
+
+        //Concatenamos a la cadena el Player mas un guion para separarlos
+        foreach (Player player in listaPlayers)
+            cadena += $"{player.ActorNumber}-";
+
+        //Regresamos la cadena con todos los ids de los players
+        return cadena;
+    }
+
+    public static List<Player> StringToList(string cadena)
+    {
+        //Convertimos la cadena a una lista de strings con los Ids
+        List<string> listaIds = new List<string>(cadena.Split('-'));
+
+        //Creamos una lista de Players
+        List<Player> listaPlayers = new List<Player>();
+
+        foreach (string idString in listaIds)
+        {
+            //CONTINUE: Si el id esta vacio
+            if (idString == string.Empty) continue;
+
+            //Convertir la cadena a un entero
+            int id = Convert.ToInt32(idString);
+
+            //Obtener al Player por su id (Actor Number)
+            Player player = PhotonNetwork.CurrentRoom.GetPlayer(id);
+
+            //Lo agregamos a la lista
+            listaPlayers.Add(player);
+        }
+
+        //Retornamos la lista de los votantes
+        return listaPlayers;
+    }
+
     public static void Votar(Voto voto)
     {
+        //RETURN: Si esta bloqueado el voto
+        if (bloquearVoto) return;
 
+        //Bloqueamos el voto por 1 segundo
+        bloquearVoto = true;
+        self.Invoke(methodName: "DesbloquearVoto", time: 0.5f);
+
+        //Obtenemos las propiedades por quien votamos
+        Hashtable propieades = voto.Player.CustomProperties;
+
+        //Obtenemos la lista de votantes
+        List<Player> votantes = StringToList(propieades["Votantes"].ToString());
+
+        //Nos agregamos a su lista de votantes
+        votantes.Add(PhotonNetwork.LocalPlayer);
+
+        //Volvemos a convertir la lista a una cadena para poder enviarla a Photon
+        propieades["Votantes"] = ListToString(votantes);
+
+        //Aumentamos en 1 el numero de votos
+        propieades["Votos"] = (int)propieades["Votos"] + 1;
+
+        //Aplicamos los cambios de por quien votamos
+        voto.Player.SetCustomProperties(propieades);
+
+        //Si ya habia votado por alguien
+        if (miVoto != null)
+        {
+            //Obtenemos las propiedades de por quien habamos votado anteriormente
+            Hashtable p = miVoto.CustomProperties;
+
+            //Obtenemos la lista de votantes, por quien habia votado antes
+            votantes = StringToList(p["Votantes"].ToString());
+
+            //Nos removemos de la lista
+            votantes.Remove(PhotonNetwork.LocalPlayer);
+
+            //Le pasamos la lista modificada, donde nos removimos
+            p["Votantes"] = ListToString(votantes);
+
+            p["Votos"] = (int)p["Votos"] - 1;
+
+            //Actualizamos los cambios
+            miVoto.SetCustomProperties(p);
+        }
+
+        //Guardamos por quien votamos
+        miVoto = voto.Player;
+    }
+
+    public void DesbloquearVoto()
+    {
+        bloquearVoto = false;
     }
 
     //Para usar corrutinas, importar: using System.Collections;
@@ -342,34 +450,80 @@ public class GameManager : MonoBehaviourPunCallbacks
         //Cuando termina la cuenta regresiva
         CuentaRegresivaFinalizada();
     }
-    public static void CuentaRegresivaFinalizada()
+    private static void CuentaRegresivaFinalizada()
     {
+        Hashtable propiedades = PhotonNetwork.CurrentRoom.CustomProperties;
 
+        //- Cuando el Timer llego a 0
+        int mayor = -1;
+        Player masVotado = null;
+        bool empate = false;
+
+        //Revisar los votos
+        foreach (Player player in PhotonNetwork.CurrentRoom.Players.Values)
+        {
+            //Obtenemos cuantos votos tiene ese Jugador
+            int votos = (int)player.CustomProperties["Votos"];
+
+            //Si es mayor, reemplazamos el mayor
+            if (votos > mayor)
+            {
+                mayor = votos;
+                masVotado = player;
+                empate = false;
+            }
+            //Si hay votos iguales
+            else if (votos == mayor)
+            {
+                empate = true;
+            }
+        }
+
+        //Cerramos la votacion (Va a cerrar la ventana de votacion)
+        propiedades["VotacionIniciada"] = false;
+
+        //Eliminar la Llave de Cuenta regresiva
+        propiedades.Remove("CuentaRegresiva");
+
+        //Si hubo empate, guardamos -1 y si no, enviamos quien fue el mas votado
+        propiedades["MasVotado"] = empate ? -1 : masVotado.ActorNumber;
+
+        //Aplicamos los cambios
+        PhotonNetwork.CurrentRoom.SetCustomProperties(propiedades);
     }
     private void Votacion_Sala_PropiedadesCambiadas(Hashtable propiedades)
     {
-        //- VOTACION INICIADA
-        if (propiedades.ContainsKey("VotacionIniciada"))
-        {
-            //Obtenemos el value de la Key
-            bool votacionIniciada = (bool)propiedades["VotacionIniciada"];
-
-            //Abrimos la ventana de votacion
-            VentanaVotacionAbierta = votacionIniciada;
-
-            //Bloqueamos el movimiento de todos los jugadores
-            if (votacionIniciada) bloquearMovimiento = true;
-        }
-
-        //- CUENTA REGRESIVA
+        // CUENTA REGRESIVA
         if (propiedades.ContainsKey("CuentaRegresiva"))
         {
-            //Obtenemos el tiempo en segundos
+            // Obtenemos el tiempo en segundos
             int t = (int)propiedades["CuentaRegresiva"];
 
-            //Convertimos el tiempo al formato de cuenta regresiva
+            // Convertimos el tiempo al formato de cuenta regresiva
             TimeSpan timeSpan = TimeSpan.FromSeconds(t);
-            txtCuentaRegresiva.text = timeSpan.ToString(format: @"mm\:ss");
+            txtCuentaRegresiva.text = timeSpan.ToString(@"mm\:ss");
+        }
+
+        // CUENTA REGRESIVA FINALIZADA
+        if (propiedades.ContainsKey("MasVotado"))
+        {
+            // Obtenemos el valor
+            int actorNumber = (int)propiedades["MasVotado"];
+
+            // Empate
+            if (actorNumber == -1)
+            {
+                // Vamos a mostrar el texto de empate
+                MostrarTxtCentral("Empate de Votacion");
+
+                // Desbloquear el movimiento de los jugadores
+                bloquearMovimiento = false;
+            }
+            else
+            {
+                // Expulsamos al jugador
+                StartCoroutine(CrExpulsar(actorNumber));
+            }
         }
     }
 
@@ -414,7 +568,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-
     // En el método ImagePersonaje, especifica el namespace completo para Image:
     public static UnityEngine.UI.Image ImagePersonaje(Player pLayer)
     {
@@ -429,4 +582,68 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     #endregion RECUROS
+
+    #region EXPULSOR
+    [Header("EXPULSOR")]
+    [SerializeField] private Animator expulsor;
+    [SerializeField] private Transform emptyPersonaje;
+
+    public IEnumerator CrExpulsar(int actorNumber)
+    {
+        // Obtenemos el Player segun su actorNumber
+        Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
+
+        // Obtenemos la referencia del player
+        Jugador jugador = dicJugadores[player];
+
+        // Si no era el asesino
+        string txt = jugador.Asesino ? $" {player.NickName} era el Asesino " : $" {player.NickName} no era el Asesino";
+        MostrarTxtCentral(txt);
+
+        // Lo hacemos hijo de Empty Personaje y deshabilitamos su Photon Transform
+        jugador.PhotonTransform.enabled = false; // Para evitar sincronizar el movimiento
+        jugador.transform.SetParent(emptyPersonaje); // Lo hacemos hijo para que siga el movimiento de la animacion
+        jugador.transform.position = emptyPersonaje.position;
+
+        // Activamos el expulsor
+        expulsor.gameObject.SetActive(true);
+        expulsor.SetTrigger("expulsar");
+
+        // Esperamos los 4 segundos que dura la animacion + 1s
+        yield return new WaitForSeconds(5);
+
+        // Si se expulso al Asesino
+        if (jugador.Asesino)
+        {
+            // Gana la tripulacion
+            yield break;
+        }
+
+        // Desactivamos el expulsor (Donde esta la camara)
+        expulsor.gameObject.SetActive(false);
+
+        // Lo mandamos a la raiz de la jerarquia
+        jugador.transform.SetParent(null);
+
+        // Colocamos al jugador expulsado en el origen
+        jugador.transform.position = Vector3.zero;
+
+        // Regresamos el personaje a su tamaño original
+        jugador.transform.localScale = Vector3.one;
+
+        // Volvemos a habilitar su Transform View
+        jugador.PhotonTransform.enabled = true;
+
+        // Los volvemos fantasma
+        if (miJugador.Player.ActorNumber == player.ActorNumber)
+        {
+            Hashtable propiedadesJugador = player.CustomProperties;
+            propiedadesJugador["Fantasma"] = true;
+            player.SetCustomProperties(propiedadesJugador);
+        }
+
+        // Desbloqueamos el movimiento
+        bloquearMovimiento = false;
+    }
+    #endregion EXPULSOR
 }
